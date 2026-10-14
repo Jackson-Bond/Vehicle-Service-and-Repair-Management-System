@@ -5,8 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -15,13 +14,16 @@ datasource db {
 }
 
 model Shop {
-  id        Int        @id @default(autoincrement()) @map("shop_id")
-  name      String
-  address   String?
-  phone     String?
-  email     String?
-  users     ShopUser[]
-  customers Customer[]
+  id         Int         @id @default(autoincrement()) @map("shop_id")
+  name       String
+  address    String?
+  phone      String?
+  email      String?
+  users      ShopUser[]
+  customers  Customer[]
+  workOrders WorkOrder[]
+  parts      Part[]
+  services   Service[]
 
   @@map("shop")
 }
@@ -32,36 +34,41 @@ model User {
   pinHash String     @map("pin_hash")
   shops   ShopUser[]
 
-  createdWorkOrders  WorkOrder[] @relation("WorkOrderCreatedBy")
   assignedWorkOrders WorkOrder[] @relation("WorkOrderAssignedTechnician")
 
   @@map("user")
 }
 
 model ShopUser {
-  shopId Int    @map("shop_id")
-  userId Int    @map("user_id")
-  role   String
+  shopId       Int    @map("shop_id")
+  userId       Int    @map("user_id")
+  role         String
+  employeeCode String @map("employee_code")
 
   shop Shop @relation(fields: [shopId], references: [id])
   user User @relation(fields: [userId], references: [id])
 
+  createdWorkOrders WorkOrder[] @relation("WorkOrderCreator")
+
   @@id([shopId, userId])
+  @@unique([shopId, employeeCode])
   @@map("shop_user")
 }
 
 model Customer {
-  id                      Int      @id @default(autoincrement()) @map("customer_id")
-  shopId                  Int      @map("shop_id")
-  name                    String
-  phone                   String?
-  email                   String?
-  preferredContactMethod  String?  @map("preferred_contact_method")
+  id                     Int     @id @default(autoincrement()) @map("customer_id")
+  shopId                 Int     @map("shop_id")
+  name                   String
+  phone                  String?
+  email                  String?
+  preferredContactMethod String? @map("preferred_contact_method")
 
   shop       Shop              @relation(fields: [shopId], references: [id])
   vehicles   CustomerVehicle[]
   workOrders WorkOrder[]
 
+  @@unique([id, shopId])
+  @@index([shopId])
   @@map("customer")
 }
 
@@ -85,81 +92,119 @@ model CustomerVehicle {
   customer Customer @relation(fields: [customerId], references: [id])
   vehicle  Vehicle  @relation(fields: [vehicleId], references: [id])
 
+  workOrders WorkOrder[]
+
   @@id([customerId, vehicleId])
+  @@index([vehicleId])
   @@map("customer_vehicle")
 }
 
 model WorkOrder {
-  id                    Int       @id @default(autoincrement()) @map("work_order_id")
-  customerId            Int       @map("customer_id")
-  vehicleId             Int       @map("vehicle_id")
-  createdBy             Int       @map("created_by")
-  assignedTechnician    Int?      @map("assigned_technician")
-  status                String
-  createdAt             DateTime  @default(now()) @map("created_at")
-  completedAt           DateTime? @map("completed_at")
-  mileageIn             Int?      @map("mileage_in")
-  customerComplaint     String?   @map("customer_complaint")
-  diagnosis             String?
-  notes                 String?
+  id                 Int       @id @default(autoincrement()) @map("work_order_id")
+  shopId             Int       @map("shop_id")
+  customerId         Int       @map("customer_id")
+  vehicleId          Int       @map("vehicle_id")
+  createdBy          Int       @map("created_by")
+  assignedTechnician Int?      @map("assigned_technician")
+  status             String
+  createdAt          DateTime  @default(now()) @map("created_at")
+  completedAt        DateTime? @map("completed_at")
+  mileageIn          Int?      @map("mileage_in")
+  customerComplaint  String?   @map("customer_complaint")
+  diagnosis          String?
+  notes              String?
 
-  customer         Customer            @relation(fields: [customerId], references: [id])
-  vehicle          Vehicle             @relation(fields: [vehicleId], references: [id])
-  createdByUser    User                @relation("WorkOrderCreatedBy", fields: [createdBy], references: [id])
-  technician       User?               @relation("WorkOrderAssignedTechnician", fields: [assignedTechnician], references: [id])
-  parts            WorkOrderPart[]
-  services         WorkOrderService[]
+  shop Shop @relation(fields: [shopId], references: [id])
 
+  // Customer must belong to the same shop as the work order
+  customer Customer @relation(fields: [customerId, shopId], references: [id, shopId])
+
+  // Vehicle must be linked to that customer
+  customerVehicle CustomerVehicle @relation(fields: [customerId, vehicleId], references: [customerId, vehicleId])
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+
+  // Creator must be a member of this shop
+  creator ShopUser @relation("WorkOrderCreator", fields: [shopId, createdBy], references: [shopId, userId])
+
+  // Technician: plain FK (Prisma can't do an optional composite). Check shop membership in the route handler.
+  technician User? @relation("WorkOrderAssignedTechnician", fields: [assignedTechnician], references: [id])
+
+  parts    WorkOrderPart[]
+  services WorkOrderService[]
+
+  @@unique([id, shopId])
+  @@index([shopId, status])
+  @@index([shopId, createdAt])
+  @@index([customerId])
+  @@index([vehicleId])
+  @@index([assignedTechnician])
   @@map("work_order")
 }
 
 model Part {
-  id                Int    @id @default(autoincrement()) @map("part_id")
-  partNumber        String @map("part_number")
-  name              String
-  description       String?
-  price             Decimal @db.Decimal(10, 2)
-  quantityInStock   Int     @default(0) @map("quantity_in_stock")
+  id              Int     @id @default(autoincrement()) @map("part_id")
+  shopId          Int     @map("shop_id")
+  partNumber      String  @map("part_number")
+  name            String
+  description     String?
+  price           Decimal @db.Decimal(10, 2)
+  quantityInStock Int     @default(0) @map("quantity_in_stock")
 
+  shop       Shop            @relation(fields: [shopId], references: [id])
   workOrders WorkOrderPart[]
 
+  @@unique([id, shopId])
+  @@unique([shopId, partNumber])
+  @@index([shopId])
   @@map("part")
 }
 
 model WorkOrderPart {
   workOrderId Int     @map("work_order_id")
   partId      Int     @map("part_id")
+  shopId      Int     @map("shop_id")
   quantity    Int
-  unitPrice   Decimal @db.Decimal(10, 2) @map("unit_price")
+  unitPrice   Decimal @map("unit_price") @db.Decimal(10, 2)
 
-  workOrder WorkOrder @relation(fields: [workOrderId], references: [id])
-  part      Part      @relation(fields: [partId], references: [id])
+  // Work order and part must both belong to the same shop
+  workOrder WorkOrder @relation(fields: [workOrderId, shopId], references: [id, shopId])
+  part      Part      @relation(fields: [partId, shopId], references: [id, shopId])
 
   @@id([workOrderId, partId])
+  @@index([partId])
+  @@index([shopId])
   @@map("work_order_part")
 }
 
 model Service {
   id           Int     @id @default(autoincrement()) @map("service_id")
+  shopId       Int     @map("shop_id")
   name         String
   description  String?
-  defaultPrice Decimal @db.Decimal(10, 2) @map("default_price")
+  defaultPrice Decimal @map("default_price") @db.Decimal(10, 2)
 
+  shop       Shop               @relation(fields: [shopId], references: [id])
   workOrders WorkOrderService[]
 
+  @@unique([id, shopId])
+  @@unique([shopId, name])
+  @@index([shopId])
   @@map("service")
 }
 
 model WorkOrderService {
   workOrderId Int     @map("work_order_id")
   serviceId   Int     @map("service_id")
+  shopId      Int     @map("shop_id")
   price       Decimal @db.Decimal(10, 2)
   notes       String?
 
-  workOrder WorkOrder @relation(fields: [workOrderId], references: [id])
-  service   Service   @relation(fields: [serviceId], references: [id])
+  workOrder WorkOrder @relation(fields: [workOrderId, shopId], references: [id, shopId])
+  service   Service   @relation(fields: [serviceId, shopId], references: [id, shopId])
 
   @@id([workOrderId, serviceId])
+  @@index([serviceId])
+  @@index([shopId])
   @@map("work_order_service")
 }
-

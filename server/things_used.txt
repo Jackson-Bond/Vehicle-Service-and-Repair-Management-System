@@ -1,6 +1,0 @@
-npm init -y
-npm install express cors dotenv
-npm install prisma@6 --save-dev
-npm install @prisma/client
-npx prisma init
-npx prisma migrate dev --name init

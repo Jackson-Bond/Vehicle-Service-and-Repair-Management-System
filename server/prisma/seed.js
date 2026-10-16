@@ -20,10 +20,16 @@ async function main() {
 
   // shops
   const shopA = await prisma.shop.create({
-    data: { name: 'Bobs Auto Care', address: '100 Main St', phone: '817-555-0101', email: 'a@example.com' },
+    data: {
+      name: 'Bobs Auto Care', address: '100 Main St', phone: '817-555-0101', email: 'a@example.com',
+      nextEmployeeNumber: 1004,
+    },
   });
   const shopB = await prisma.shop.create({
-    data: { name: 'Freds Garage', address: '200 Oak Ave', phone: '817-555-0202', email: 'b@example.com' },
+    data: {
+      name: 'Freds Garage', address: '200 Oak Ave', phone: '817-555-0202', email: 'b@example.com',
+      nextEmployeeNumber: 1003,
+    },
   });
 
   // users
@@ -35,11 +41,11 @@ async function main() {
   // memberships (Jane works at both shops with different employee codes)
   await prisma.shopUser.createMany({
     data: [
-      { shopId: shopA.id, userId: jane.id, role: 'manager', employeeCode: 'jane' },
-      { shopId: shopA.id, userId: sam.id, role: 'technician', employeeCode: 'sam' },
-      { shopId: shopA.id, userId: tom.id, role: 'technician', employeeCode: 'tom' },
-      { shopId: shopB.id, userId: jane.id, role: 'manager', employeeCode: 'jane-b' },
-      { shopId: shopB.id, userId: rita.id, role: 'technician', employeeCode: 'rita' },
+      { shopId: shopA.id, userId: jane.id, role: 'manager',    employeeCode: 1001 },
+      { shopId: shopA.id, userId: sam.id,  role: 'technician',    employeeCode: 1002 },
+      { shopId: shopA.id, userId: tom.id,  role: 'technician', employeeCode: 1003 },
+      { shopId: shopB.id, userId: jane.id, role: 'manager',    employeeCode: 1001 },
+      { shopId: shopB.id, userId: rita.id, role: 'technician', employeeCode: 1002 },
     ],
   });
 
@@ -62,7 +68,7 @@ async function main() {
     data: { vin: '1FTFW1E50JFA12345', make: 'Ford', model: 'F-150', year: 2018 },
   });
 
-  // customer <-> vehicle links (must exist before a work order can use the pair)
+  // customer to vehicle links (must exist before a work order can use the pair)
   await prisma.customerVehicle.createMany({
     data: [
       { customerId: mariaA.id, vehicleId: camry.id },
@@ -134,7 +140,7 @@ async function main() {
     },
   });
 
-  // line items (shopId must match the work order AND the part/service; prices are snapshots)
+  // parts (shopId must match the work order AND the part/service)
   await prisma.workOrderPart.createMany({
     data: [
       { shopId: shopA.id, workOrderId: wo1.id, partId: oilFilterA.id, quantity: 1, unitPrice: 8.99 },
@@ -142,6 +148,8 @@ async function main() {
       { shopId: shopB.id, workOrderId: wo3.id, partId: oilFilterB.id, quantity: 1, unitPrice: 9.49 },
     ],
   });
+
+  // services
   await prisma.workOrderService.createMany({
     data: [
       { shopId: shopA.id, workOrderId: wo1.id, serviceId: oilChangeA.id, price: 49.99, notes: '5W-30 synthetic' },
@@ -154,8 +162,8 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
-    console.error(e);
+  .catch((error) => {
+    console.error(error);
     process.exit(1);
   })
   .finally(() => prisma.$disconnect());

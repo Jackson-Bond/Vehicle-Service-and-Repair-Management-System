@@ -24,6 +24,7 @@ model Shop {
   workOrders WorkOrder[]
   parts      Part[]
   services   Service[]
+  nextEmployeeNumber Int @default(1001) @map("next_employee_number")
 
   @@map("shop")
 }
@@ -43,7 +44,7 @@ model ShopUser {
   shopId       Int    @map("shop_id")
   userId       Int    @map("user_id")
   role         String
-  employeeCode String @map("employee_code")
+  employeeCode Int @map("employee_code")
 
   shop Shop @relation(fields: [shopId], references: [id])
   user User @relation(fields: [userId], references: [id])

@@ -6,8 +6,9 @@ export default function Login({ onLogin }) {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
 
-  async function handleSubmit(e) {
-    e.preventDefault(); // stop the browser from reloading the page
+  async function handleSubmit(submit) {
+    // stop browser from reloading the page
+    submit.preventDefault();
     setError('');
 
     try {
@@ -22,7 +23,9 @@ export default function Login({ onLogin }) {
         setError(data.error || 'Login failed');
         return;
       }
-      onLogin(data); // { token, role, name }
+      // { token, role, name }
+      onLogin(data);
+
     } catch {
       setError('Could not reach the server');
     }
@@ -33,17 +36,17 @@ export default function Login({ onLogin }) {
       <h1>Login</h1>
       <div>
         <label>Shop ID </label>
-        <input value={shopId} onChange={(e) => setShopId(e.target.value)} />
+        <input value={shopId} onChange={(change) => setShopId(change.target.value)} />
       </div>
       <div>
-        <label>Employee code </label>
-        <input value={employeeCode} onChange={(e) => setEmployeeCode(e.target.value)} />
+        <label>Employee Code </label>
+        <input inputMode="numeric" value={employeeCode} onChange={(change) => setEmployeeCode(change.target.value)} />
       </div>
       <div>
         <label>PIN </label>
         <input type="password" value={pin} onChange={(e) => setPin(e.target.value)} />
       </div>
-      <button type="submit">Log in</button>
+      <button type="submit">Log In</button>
       {error && <p>{error}</p>}
     </form>
   );

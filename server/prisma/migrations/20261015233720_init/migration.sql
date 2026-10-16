@@ -5,6 +5,7 @@ CREATE TABLE "shop" (
     "address" TEXT,
     "phone" TEXT,
     "email" TEXT,
+    "next_employee_number" INTEGER NOT NULL DEFAULT 1001,
 
     CONSTRAINT "shop_pkey" PRIMARY KEY ("shop_id")
 );
@@ -23,7 +24,7 @@ CREATE TABLE "shop_user" (
     "shop_id" INTEGER NOT NULL,
     "user_id" INTEGER NOT NULL,
     "role" TEXT NOT NULL,
-    "employee_code" TEXT NOT NULL,
+    "employee_code" INTEGER NOT NULL,
 
     CONSTRAINT "shop_user_pkey" PRIMARY KEY ("shop_id","user_id")
 );

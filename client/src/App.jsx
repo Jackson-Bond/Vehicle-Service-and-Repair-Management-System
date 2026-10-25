@@ -21,7 +21,7 @@ export default function App() {
       <Route path="/customers/new" element={<RegisterCustomer session={session} onLogout={logout} />} />
       <Route path="/vehicles/new" element={<RegisterVehicle session={session} />} />
       <Route path="/work-orders/new" element={<CreateWorkOrder session={session} onLogout={logout} />} />
-      <Route path="/work-orders/:id" element={<WorkOrderDetail session={session} />} />
+      <Route path="/work-orders/:id" element={<WorkOrderDetail session={session} onLogout={logout} />} />
       {session.role === 'manager' && (
         <Route path="/users/new" element={<AddUser session={session} onLogout={logout} />} />
       )}

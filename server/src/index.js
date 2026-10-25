@@ -9,6 +9,7 @@ import authenticate from './middleware/authenticate.js';
 import workOrderRoutes from './routes/workOrders.js';
 import vehicleRoutes from './routes/vehicles.js';
 import userRoutes from './routes/users.js';
+import partRoutes from './routes/parts.js';
 
 const app = express();
 // allows browser based requests from vite
@@ -22,6 +23,7 @@ app.use('/api/customers', authenticate, customerRoutes);
 app.use('/api/work-orders', authenticate, workOrderRoutes);
 app.use('/api/vehicles', authenticate, vehicleRoutes);
 app.use('/api/users', authenticate, userRoutes);
+app.use('/api/parts', authenticate, partRoutes);
 
 app.get('/health', async (req, res) => {
   try {

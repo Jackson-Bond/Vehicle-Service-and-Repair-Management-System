@@ -5,6 +5,7 @@ import { api } from '../api.js';
 export default function Home({ session, onLogout }) {
   const [workOrders, setWorkOrders] = useState([]);
   const [error, setError] = useState('');
+  const isTechnician = session.role === 'technician';
 
   useEffect(() => {
     api('/api/work-orders', session.token)
@@ -32,7 +33,7 @@ export default function Home({ session, onLogout }) {
         )}
       </div>
 
-      <h2>Work Orders</h2>
+      <h2>{isTechnician ? 'My Assigned Work Orders' : 'Work Orders'}</h2>
       {error && <p>{error}</p>}
 
       <table border="1">
@@ -59,7 +60,9 @@ export default function Home({ session, onLogout }) {
           ))}
         </tbody>
       </table>
-      {workOrders.length === 0 && !error && <p>No work orders yet.</p>}
+      {workOrders.length === 0 && !error && (
+        <p>{isTechnician ? 'No work orders are assigned to you.' : 'No work orders yet.'}</p>
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api.js';
+import { STATUS_LABELS, PROGRESS_LABELS } from '../statuses.js';
 
 const money = (value) => `$${Number(value).toFixed(2)}`;
 
@@ -18,6 +19,12 @@ export default function WorkOrderDetail({ session, onLogout }) {
   const [partForm, setPartForm] = useState({ partId: '', quantity: '1' });
   const [partMessage, setPartMessage] = useState('');
   const [savingPart, setSavingPart] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
+
+  const [services, setServices] = useState([]);
+  const [serviceId, setServiceId] = useState('');
+  const [serviceMessage, setServiceMessage] = useState('');
+  const [selectedServiceIds, setSelectedServiceIds] = useState([]);
 
   function handleApiError(err, setMessage) {
     if (err.status === 401) onLogout();
@@ -26,6 +33,7 @@ export default function WorkOrderDetail({ session, onLogout }) {
 
   function showWorkOrder(data) {
     setWorkOrder(data);
+    setSelectedServiceIds(data.services.map((l) => l.serviceId));
     setDiagnosisForm({
       diagnosis: data.diagnosis ?? '',
       recommendedRepairs: data.notes ?? '',
@@ -38,11 +46,18 @@ export default function WorkOrderDetail({ session, onLogout }) {
       .catch((err) => handleApiError(err, setPartMessage));
   }
 
+  function loadServices() {
+    api('/api/services', session.token)
+      .then(setServices)
+      .catch((err) => handleApiError(err, setServiceMessage));
+  }
+
   useEffect(() => {
     api(`/api/work-orders/${id}`, session.token)
       .then(showWorkOrder)
       .catch((err) => handleApiError(err, setLoadError));
     loadParts();
+    loadServices();
   }, [id, session.token]);
 
   async function saveDiagnosis(submit) {
@@ -99,6 +114,66 @@ export default function WorkOrderDetail({ session, onLogout }) {
     }
   }
 
+  async function addService(submit) {
+    submit.preventDefault();
+    setServiceMessage('');
+    if (!serviceId) return setServiceMessage('Select a service');
+    try {
+      const data = await api(`/api/work-orders/${id}/services`, session.token, {
+        method: 'POST',
+        body: JSON.stringify({ serviceId: Number(serviceId) }),
+      });
+      showWorkOrder(data);
+      setServiceId('');
+    } catch (err) {
+      handleApiError(err, setServiceMessage);
+    }
+  }
+
+  async function removeService(sid) {
+    setServiceMessage('');
+    try {
+      showWorkOrder(await api(`/api/work-orders/${id}/services/${sid}`, session.token, { method: 'DELETE' }));
+    } catch (err) {
+      handleApiError(err, setServiceMessage);
+    }
+  }
+
+  async function setProgress(sid, progress) {
+    setServiceMessage('');
+    try {
+      showWorkOrder(await api(`/api/work-orders/${id}/services/${sid}/progress`, session.token, {
+        method: 'PATCH',
+        body: JSON.stringify({ progress }),
+      }));
+    } catch (err) {
+      handleApiError(err, setServiceMessage);
+    }
+  }
+
+  function toggleService(sid) {
+    setSelectedServiceIds((ids) =>
+      ids.includes(sid) ? ids.filter((x) => x !== sid) : [...ids, sid]
+    );
+  }
+
+  async function changeStatus(status, extra = {}) {
+    setStatusMessage('');
+    if (status === 'cancelled' && !window.confirm('Cancel this work order?')) return;
+    if (status === 'completed' && !window.confirm('Mark this repair as completed?')) return;
+    try {
+      const data = await api(`/api/work-orders/${id}/status`, session.token, {
+        method: 'PATCH',
+        body: JSON.stringify({ status, ...extra }),
+      });
+      showWorkOrder(data);
+    } catch (err) {
+      handleApiError(err, setStatusMessage);
+    }
+  }
+
+
+
   if (loadError) {
     return (
       <div>
@@ -110,15 +185,21 @@ export default function WorkOrderDetail({ session, onLogout }) {
 
   if (!workOrder) return <p>Loading...</p>;
 
-  const isClosed = ['completed', 'cancelled'].includes(workOrder.status);
-  const editable = workOrder.canEdit && !isClosed;
+  const status = workOrder.status;
+  const canEditServices = workOrder.canEdit && status === 'diagnosis';
+  const canEditProgress = workOrder.canEdit && status === 'in_repair';
+  const showTodo = ['approved', 'in_repair', 'completed', 'closed'].includes(status);
+  const todo = workOrder.services.filter((line) => line.approved);
+  const pendingTodo = todo.some((line) => line.progress !== 'completed');
+  const billable = showTodo ? todo : workOrder.services;
+  const servicesTotal = billable.reduce((sum, line) => sum + Number(line.price), 0);
+
+  const editable = workOrder.canEdit && workOrder.status === 'diagnosis';
 
   const partsTotal = workOrder.parts.reduce(
     (sum, line) => sum + Number(line.unitPrice) * line.quantity,
     0
   );
-  const servicesTotal = workOrder.services.reduce((sum, line) => sum + Number(line.price), 0);
-
   return (
     <div>
       <Link to="/">← Back</Link>
@@ -126,7 +207,6 @@ export default function WorkOrderDetail({ session, onLogout }) {
 
       <table border="1">
         <tbody>
-          <tr><th>Status</th><td>{workOrder.status}</td></tr>
           <tr>
             <th>Customer</th>
             <td>
@@ -141,6 +221,12 @@ export default function WorkOrderDetail({ session, onLogout }) {
               {workOrder.vehicle.year} {workOrder.vehicle.make} {workOrder.vehicle.model} - VIN {workOrder.vehicle.vin}
             </td>
           </tr>
+          <tr>
+            <th>Status</th>
+            <td>
+              {STATUS_LABELS[workOrder.status] ?? workOrder.status}
+            </td>
+          </tr>
           <tr><th>Mileage in</th><td>{workOrder.mileageIn ?? '-'}</td></tr>
           <tr><th>Technician</th><td>{workOrder.technician?.name ?? 'Unassigned'}</td></tr>
           <tr><th>Created by</th><td>{workOrder.creator?.user?.name ?? '-'}</td></tr>
@@ -151,6 +237,24 @@ export default function WorkOrderDetail({ session, onLogout }) {
           <tr><th>Customer complaint</th><td>{workOrder.customerComplaint ?? '-'}</td></tr>
         </tbody>
       </table>
+
+      {workOrder.allowedNextStatuses?.length > 0 && (
+      <div>
+        <p>Move to:</p>
+        {workOrder.allowedNextStatuses
+          ?.filter((s) => s !== 'approved')
+          .map((s) => (
+          <button
+            key={s}
+            onClick={() => changeStatus(s)}
+            disabled={s === 'completed' && pendingTodo}
+          >
+            {STATUS_LABELS[s]}
+          </button>
+        ))}
+      </div>
+    )}
+    {statusMessage && <p>{statusMessage}</p>}
 
       <h2>Diagnosis</h2>
       {editable ? (
@@ -249,22 +353,111 @@ export default function WorkOrderDetail({ session, onLogout }) {
       )}
 
       <h2>Services</h2>
-      <table border="1">
-        <thead>
-          <tr><th>Service</th><th>Price</th><th>Notes</th></tr>
-        </thead>
-        <tbody>
-          {workOrder.services.map((line) => (
-            <tr key={line.serviceId}>
-              <td>{line.service.name}</td>
-              <td>{money(line.price)}</td>
-              <td>{line.notes ?? ''}</td>
+
+      {status === 'customer_approval' ? (
+        <div>
+          <p>Select the services the customer approves:</p>
+          <table border="1">
+            <thead><tr><th></th><th>Service</th><th>Price</th></tr></thead>
+            <tbody>
+              {workOrder.services.map((line) => (
+                <tr key={line.serviceId}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={selectedServiceIds.includes(line.serviceId)}
+                      onChange={() => toggleService(line.serviceId)}
+                    />
+                  </td>
+                  <td>{line.service.name}</td>
+                  <td>{money(line.price)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <button
+            onClick={() => changeStatus('approved', { approvedServiceIds: selectedServiceIds })}
+            disabled={selectedServiceIds.length === 0}
+          >
+            Approve selected services
+          </button>
+        </div>
+      ) : (
+        <table border="1">
+          <thead>
+            <tr>
+              <th>Service</th>
+              <th>Price</th>
+              <th>Notes</th>
+              {showTodo && <th>Customer</th>}
+              {canEditServices && <th></th>}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {workOrder.services.map((line) => (
+              <tr key={line.serviceId}>
+                <td>{line.service.name}</td>
+                <td>{money(line.price)}</td>
+                <td>{line.notes ?? ''}</td>
+                {showTodo && <td>{line.approved ? 'Approved' : 'Not Approved'}</td>}
+                {canEditServices && (
+                  <td><button onClick={() => removeService(line.serviceId)}>Remove</button></td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
       {workOrder.services.length === 0 && <p>No services recorded.</p>}
       <p>Services total: {money(servicesTotal)}</p>
+
+      {canEditServices && (
+        <form onSubmit={addService}>
+          <select value={serviceId} onChange={(e) => setServiceId(e.target.value)}>
+            <option value="">(select a service)</option>
+            {services
+              .filter((service) => !workOrder.services.some((line) => line.serviceId === service.id))
+              .map((service) => (
+                <option key={service.id} value={service.id}>
+                  {service.name} - {money(service.defaultPrice)}
+                </option>
+              ))}
+          </select>{' '}
+          <button type="submit">Add service</button>
+        </form>
+      )}
+      {serviceMessage && <p>{serviceMessage}</p>}
+
+      {showTodo && (
+        <div>
+          <h2>To-do</h2>
+          <table border="1">
+            <thead><tr><th>Service</th><th>Progress</th></tr></thead>
+            <tbody>
+              {todo.map((line) => (
+                <tr key={line.serviceId}>
+                  <td>{line.service.name}</td>
+                  <td>
+                    {canEditProgress ? (
+                      <select
+                        value={line.progress}
+                        onChange={(e) => setProgress(line.serviceId, e.target.value)}
+                      >
+                        {Object.entries(PROGRESS_LABELS).map(([value, label]) => (
+                          <option key={value} value={value}>{label}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      PROGRESS_LABELS[line.progress]
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {status === 'in_repair' && pendingTodo && <p>All services must be completed to complete this repair.</p>}
+        </div>
+      )}
     </div>
   );
 }

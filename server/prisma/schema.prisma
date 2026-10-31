@@ -200,6 +200,8 @@ model WorkOrderService {
   shopId      Int     @map("shop_id")
   price       Decimal @db.Decimal(10, 2)
   notes       String?
+  approved    Boolean @default(false)
+  progress    String  @default("not_started")
 
   workOrder WorkOrder @relation(fields: [workOrderId, shopId], references: [id, shopId])
   service   Service   @relation(fields: [serviceId, shopId], references: [id, shopId])

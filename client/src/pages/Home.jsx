@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api.js';
+import { STATUS_LABELS } from '../statuses.js';
 
 export default function Home({ session, onLogout }) {
   const [workOrders, setWorkOrders] = useState([]);
@@ -51,7 +52,7 @@ export default function Home({ session, onLogout }) {
           {workOrders.map((workOrder) => (
             <tr key={workOrder.id}>
               <td><Link to={`/work-orders/${workOrder.id}`}>#{workOrder.id}</Link></td>
-              <td>{workOrder.status}</td>
+              <td>{STATUS_LABELS[workOrder.status] ?? workOrder.status}</td>
               <td>{workOrder.customer.name}</td>
               <td>{workOrder.vehicle.year} {workOrder.vehicle.make} {workOrder.vehicle.model}</td>
               <td>{workOrder.technician?.name ?? 'Unassigned'}</td>

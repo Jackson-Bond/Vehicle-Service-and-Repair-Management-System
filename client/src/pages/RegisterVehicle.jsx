@@ -98,59 +98,83 @@ export default function RegisterVehicle({ session, onLogout }) {
   }
 
   return (
-    <div>
-      <Link to="/">← Back</Link>
-      <h1> Vehicle</h1>
+    <div className="page page-narrow">
+      <div className="page-header">
+        <div>
+          <h1>Register vehicle</h1>
+          <p>Link a vehicle to an existing customer.</p>
+        </div>
+      </div>
 
-      <form onSubmit={handleSubmit}>
-        <div ref={pickerRef}>
-          <label>Customer </label>
+      <form className="panel form" onSubmit={handleSubmit}>
+        <div className="field" ref={pickerRef}>
+          <label htmlFor="customer-search">Customer</label>
           <input
+            id="customer-search"
             value={search}
             onChange={handleSearchChange}
             onFocus={() => setOpen(true)}
-            placeholder="Type to Search"
+            placeholder="Search by name, phone or email"
             autoComplete="off"
           />
-          {selectedCustomer && <span>selected</span>}
+          {selectedCustomer && <span className="picker-selected">Customer selected</span>}
 
           {open && (
-            <ul>
+            <ul className="picker-list">
               {results.map((c) => (
                 <li key={c.id}>
                   <button type="button" onClick={() => selectCustomer(c)}>
-                    {c.name}
-                    {c.phone ? ` (${c.phone})` : ''}
-                    {c.email ? ` ${c.email}` : ''}
+                    <div>{c.name}</div>
+                    {(c.phone || c.email) && (
+                      <div className="picker-detail">{[c.phone, c.email].filter(Boolean).join(', ')}</div>
+                    )}
                   </button>
                 </li>
               ))}
-              {results.length === 0 && <li>No Customers Found</li>}
+              {results.length === 0 && (
+                <li className="picker-empty">
+                  No customers found. <Link to="/customers/new">Register a customer</Link>
+                </li>
+              )}
             </ul>
           )}
         </div>
 
-        <div>
-          <label>VIN </label>
-          <input name="vin" value={form.vin} onChange={handleChange} maxLength={17} required />
+        <div className="field">
+          <label htmlFor="vin">VIN</label>
+          <input
+            id="vin"
+            name="vin"
+            value={form.vin}
+            onChange={handleChange}
+            maxLength={17}
+            style={{ textTransform: 'uppercase' }}
+            required
+          />
+          <span className="hint">17 characters. The letters I, O and Q are never used.</span>
         </div>
-        <div>
-          <label>Make </label>
-          <input name="make" value={form.make} onChange={handleChange} required />
-        </div>
-        <div>
-          <label>Model </label>
-          <input name="model" value={form.model} onChange={handleChange} required />
-        </div>
-        <div>
-          <label>Year </label>
-          <input name="year" type="number" value={form.year} onChange={handleChange} required />
+        <div className="field-row">
+          <div className="field">
+            <label htmlFor="make">Make</label>
+            <input id="make" name="make" value={form.make} onChange={handleChange} required />
+          </div>
+          <div className="field">
+            <label htmlFor="model">Model</label>
+            <input id="model" name="model" value={form.model} onChange={handleChange} required />
+          </div>
+          <div className="field">
+            <label htmlFor="year">Year</label>
+            <input id="year" name="year" type="number" value={form.year} onChange={handleChange} required />
+          </div>
         </div>
 
-        <button type="submit" disabled={saving}>
-          {saving ? 'Saving...' : 'Register vehicle'}
-        </button>
-        {error && <p>{error}</p>}
+        <div className="form-actions">
+          <button type="submit" className="btn" disabled={saving}>
+            {saving ? 'Saving...' : 'Register vehicle'}
+          </button>
+          <Link to="/" className="btn btn-secondary">Cancel</Link>
+        </div>
+        {error && <p className="message message-error" role="alert">{error}</p>}
       </form>
     </div>
   );

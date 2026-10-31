@@ -40,18 +40,24 @@ export default function AddUser({ session, onLogout }) {
   }
 
   return (
-    <div>
-      <Link to="/">← Back</Link>
-      <h1>Add user</h1>
-
-      <form onSubmit={handleSubmit}>
+    <div className="page page-narrow">
+      <div className="page-header">
         <div>
-          <label>Name </label>
-          <input name="name" value={form.name} onChange={handleChange} required />
+          <h1>Add user</h1>
+          <p>The new employee logs in with the code shown after saving and the PIN you set.</p>
         </div>
-        <div>
-          <label>PIN (6 digits) </label>
+      </div>
+
+      <form className="panel form" onSubmit={handleSubmit}>
+        <div className="field">
+          <label htmlFor="name">Name</label>
+          <input id="name" name="name" value={form.name} onChange={handleChange} required />
+        </div>
+        <div className="field">
+          <label htmlFor="pin">PIN</label>
           <input
+            id="pin"
+            className="pin-input"
             name="pin"
             type="password"
             inputMode="numeric"
@@ -62,20 +68,24 @@ export default function AddUser({ session, onLogout }) {
             autoComplete="new-password"
             required
           />
+          <span className="hint">Exactly 6 digits.</span>
         </div>
-        <div>
-          <label>Role </label>
-          <select name="role" value={form.role} onChange={handleChange}>
+        <div className="field">
+          <label htmlFor="role">Role</label>
+          <select id="role" name="role" value={form.role} onChange={handleChange}>
             <option value="technician">Technician</option>
             <option value="manager">Manager</option>
           </select>
         </div>
 
-        <button type="submit" disabled={saving}>
-          {saving ? 'Saving...' : 'Add user'}
-        </button>
-        {error && <p>{error}</p>}
-        {success && <p>{success}</p>}
+        <div className="form-actions">
+          <button type="submit" className="btn" disabled={saving}>
+            {saving ? 'Saving...' : 'Add user'}
+          </button>
+          <Link to="/" className="btn btn-secondary">Cancel</Link>
+        </div>
+        {error && <p className="message message-error" role="alert">{error}</p>}
+        {success && <p className="message message-success" role="status">{success}</p>}
       </form>
     </div>
   );

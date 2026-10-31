@@ -2,6 +2,9 @@ import { Router } from 'express';
 import prisma from '../lib/prisma.js';
 import requireRole from '../middleware/requireRole.js';
 
+// must match the options on the Register Customer form
+const CONTACT_METHODS = ['phone', 'sms', 'email'];
+
 const router = Router();
 
 router.get('/', async (req, res) => {

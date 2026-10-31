@@ -42,40 +42,52 @@ export default function RegisterCustomer({ session, onLogout }) {
   }
 
   return (
-    <div>
-      <Link to="/">← Back</Link>
-      <h1>Register Customer</h1>
+    <div className="page page-narrow">
+      <div className="page-header">
+        <div>
+          <h1>Register customer</h1>
+          <p>Add the customer first, then register their vehicle.</p>
+        </div>
+      </div>
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Name </label>
-          <input name="name" value={form.name} onChange={handleChange} required />
+      <form className="panel form" onSubmit={handleSubmit}>
+        <div className="field">
+          <label htmlFor="name">Name</label>
+          <input id="name" name="name" value={form.name} onChange={handleChange} required />
         </div>
-        <div>
-          <label>Phone </label>
-          <input name="phone" type="tel" value={form.phone} onChange={handleChange} />
+        <div className="field-row">
+          <div className="field">
+            <label htmlFor="phone">Phone</label>
+            <input id="phone" name="phone" type="tel" value={form.phone} onChange={handleChange} />
+          </div>
+          <div className="field">
+            <label htmlFor="email">Email</label>
+            <input id="email" name="email" type="email" value={form.email} onChange={handleChange} />
+          </div>
         </div>
-        <div>
-          <label>Email </label>
-          <input name="email" type="email" value={form.email} onChange={handleChange} />
-        </div>
-        <div>
-          <label>Preferred Contact Method </label>
+        <div className="field">
+          <label htmlFor="preferredContactMethod">Preferred contact method</label>
           <select
+            id="preferredContactMethod"
             name="preferredContactMethod"
             value={form.preferredContactMethod}
             onChange={handleChange}
           >
-            <option value="">(none)</option>
-            <option value="phone">Phone</option>
+            <option value="">No preference</option>
+            <option value="phone">Phone call</option>
             <option value="sms">Text message</option>
             <option value="email">Email</option>
           </select>
+          <span className="hint">Used for updates about their vehicle.</span>
         </div>
-        <button type="submit" disabled={saving}>
-          {saving ? 'Saving...' : 'Register customer'}
-        </button>
-        {error && <p>{error}</p>}
+
+        <div className="form-actions">
+          <button type="submit" className="btn" disabled={saving}>
+            {saving ? 'Saving...' : 'Register customer'}
+          </button>
+          <Link to="/" className="btn btn-secondary">Cancel</Link>
+        </div>
+        {error && <p className="message message-error" role="alert">{error}</p>}
       </form>
     </div>
   );

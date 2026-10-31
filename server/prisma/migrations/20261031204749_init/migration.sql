@@ -121,6 +121,8 @@ CREATE TABLE "work_order_service" (
     "shop_id" INTEGER NOT NULL,
     "price" DECIMAL(10,2) NOT NULL,
     "notes" TEXT,
+    "approved" BOOLEAN NOT NULL DEFAULT false,
+    "progress" TEXT NOT NULL DEFAULT 'not_started',
 
     CONSTRAINT "work_order_service_pkey" PRIMARY KEY ("work_order_id","service_id")
 );
@@ -238,3 +240,25 @@ ALTER TABLE "work_order_service" ADD CONSTRAINT "work_order_service_work_order_i
 
 -- AddForeignKey
 ALTER TABLE "work_order_service" ADD CONSTRAINT "work_order_service_service_id_shop_id_fkey" FOREIGN KEY ("service_id", "shop_id") REFERENCES "service"("service_id", "shop_id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- Manual Adds
+ALTER TABLE "shop_user" ADD CONSTRAINT shop_user_role_check
+  CHECK (role IN ('manager', 'technician'));
+
+ALTER TABLE "work_order" ADD CONSTRAINT work_order_status_check
+  CHECK (status IN (
+    'service_requested','checked_in','diagnosis','customer_approval',
+    'approved','in_repair','completed','closed','declined','cancelled'
+  ));
+
+ALTER TABLE "vehicle" ADD CONSTRAINT vehicle_vin_length_check
+  CHECK (char_length(vin) = 17);
+
+ALTER TABLE "part" ADD CONSTRAINT part_stock_check
+  CHECK (quantity_in_stock >= 0);
+
+ALTER TABLE "work_order_part" ADD CONSTRAINT wop_quantity_check
+  CHECK (quantity > 0);
+
+ALTER TABLE "work_order_service" ADD CONSTRAINT wos_progress_check
+  CHECK (progress IN ('not_started','in_progress','completed'));

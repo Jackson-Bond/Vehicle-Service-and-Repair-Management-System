@@ -4,17 +4,11 @@ import prisma from '../src/lib/prisma.js';
 
 async function main() {
   // delete in reverse-dependency order so the seed is re-runnable
-  await prisma.workOrderService.deleteMany();
-  await prisma.workOrderPart.deleteMany();
-  await prisma.workOrder.deleteMany();
-  await prisma.customerVehicle.deleteMany();
-  await prisma.customer.deleteMany();
-  await prisma.vehicle.deleteMany();
-  await prisma.service.deleteMany();
-  await prisma.part.deleteMany();
-  await prisma.shopUser.deleteMany();
-  await prisma.user.deleteMany();
-  await prisma.shop.deleteMany();
+  await prisma.$executeRaw`
+  TRUNCATE TABLE "work_order_service", "work_order_part", "work_order",
+    "customer_vehicle", "customer", "vehicle", "service", "part",
+    "shop_user", "user", "shop"
+  RESTART IDENTITY CASCADE`;
 
   const hash = (pin) => bcrypt.hash(pin, 10);
 
@@ -122,7 +116,7 @@ async function main() {
       vehicleId: f150.id,
       createdBy: sam.id,
       assignedTechnician: tom.id,
-      status: 'in_progress',
+      status: 'diagnosis',
       mileageIn: 61500,
       customerComplaint: 'Squealing when braking',
     },
@@ -134,7 +128,7 @@ async function main() {
       vehicleId: camry.id,
       createdBy: jane.id, // Jane is a manager at shop B too
       assignedTechnician: rita.id,
-      status: 'open',
+      status: 'service_requested',
       mileageIn: 85000,
       customerComplaint: 'Oil change',
     },
@@ -152,7 +146,7 @@ async function main() {
   // services
   await prisma.workOrderService.createMany({
     data: [
-      { shopId: shopA.id, workOrderId: wo1.id, serviceId: oilChangeA.id, price: 49.99, notes: '5W-30 synthetic' },
+      { shopId: shopA.id, workOrderId: wo1.id, serviceId: oilChangeA.id, price: 49.99, notes: '5W-30 synthetic', approved: true, progress: 'completed' },
       { shopId: shopA.id, workOrderId: wo2.id, serviceId: brakeJobA.id, price: 149.0 },
       { shopId: shopB.id, workOrderId: wo3.id, serviceId: oilChangeB.id, price: 54.99 },
     ],

@@ -125,41 +125,52 @@ export default function CreateWorkOrder({ session, onLogout }) {
   }
 
   return (
-    <div>
-      <Link to="/">← Back</Link>
-      <h1>Create work order</h1>
+    <div className="page page-narrow">
+      <div className="page-header">
+        <div>
+          <h1>New work order</h1>
+          <p>Open a work order when a customer brings in a vehicle.</p>
+        </div>
+      </div>
 
-      <form onSubmit={handleSubmit}>
-        <div ref={pickerRef}>
-          <label>Customer </label>
+      <form className="panel form" onSubmit={handleSubmit}>
+        <div className="field" ref={pickerRef}>
+          <label htmlFor="customer-search">Customer</label>
           <input
+            id="customer-search"
             value={search}
             onChange={handleSearchChange}
             onFocus={() => setOpen(true)}
-            placeholder="Type to Search"
+            placeholder="Search by name, phone or email"
             autoComplete="off"
           />
-          {selectedCustomer && <span>selected</span>}
+          {selectedCustomer && <span className="picker-selected">Customer selected</span>}
 
           {open && (
-            <ul>
+            <ul className="picker-list">
               {results.map((c) => (
                 <li key={c.id}>
                   <button type="button" onClick={() => selectCustomer(c)}>
-                    {c.name}
-                    {c.phone ? ` (${c.phone})` : ''}
-                    {c.email ? ` ${c.email}` : ''}
+                    <div>{c.name}</div>
+                    {(c.phone || c.email) && (
+                      <div className="picker-detail">{[c.phone, c.email].filter(Boolean).join(', ')}</div>
+                    )}
                   </button>
                 </li>
               ))}
-              {results.length === 0 && <li>No customers found</li>}
+              {results.length === 0 && (
+                <li className="picker-empty">
+                  No customers found. <Link to="/customers/new">Register a customer</Link>
+                </li>
+              )}
             </ul>
           )}
         </div>
 
-        <div>
-          <label>Vehicle </label>
+        <div className="field">
+          <label htmlFor="vehicleId">Vehicle</label>
           <select
+            id="vehicleId"
             name="vehicleId"
             value={form.vehicleId}
             onChange={handleChange}
@@ -168,10 +179,10 @@ export default function CreateWorkOrder({ session, onLogout }) {
           >
             <option value="">
               {!selectedCustomer
-                ? '(select a customer first)'
+                ? 'Choose a customer first'
                 : vehicles.length === 0
-                  ? '(no vehicles registered)'
-                  : '(select a vehicle)'}
+                  ? 'No vehicles registered'
+                  : 'Choose a vehicle'}
             </option>
             {vehicles.map((v) => (
               <option key={v.id} value={v.id}>
@@ -180,52 +191,60 @@ export default function CreateWorkOrder({ session, onLogout }) {
             ))}
           </select>
           {selectedCustomer && vehicles.length === 0 && (
-            <span> <Link to="/vehicles/new">Register a vehicle</Link></span>
+            <span className="hint">
+              This customer has no vehicles yet. <Link to="/vehicles/new">Register a vehicle</Link>
+            </span>
           )}
         </div>
 
-        <div>
-          <label>Assigned technician </label>
-          <select
-            name="assignedTechnician"
-            value={form.assignedTechnician}
-            onChange={handleChange}
-          >
-            <option value="">(unassigned)</option>
-            {technicians.map((t) => (
-              <option key={t.id} value={t.id}>{t.name}</option>
-            ))}
-          </select>
-        </div>
+        <div className="field-row">
+          <div className="field">
+            <label htmlFor="assignedTechnician">Technician</label>
+            <select
+              id="assignedTechnician"
+              name="assignedTechnician"
+              value={form.assignedTechnician}
+              onChange={handleChange}
+            >
+              <option value="">Assign later</option>
+              {technicians.map((t) => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+          </div>
 
-        <div>
-          <label>Mileage in </label>
-          <input
-            name="mileageIn"
-            type="number"
-            min="0"
-            value={form.mileageIn}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div>
-          <label>Customer complaint </label>
-          <div>
-            <textarea
-              name="customerComplaint"
-              rows="4"
-              cols="40"
-              value={form.customerComplaint}
+          <div className="field">
+            <label htmlFor="mileageIn">Mileage in</label>
+            <input
+              id="mileageIn"
+              name="mileageIn"
+              type="number"
+              min="0"
+              value={form.mileageIn}
               onChange={handleChange}
             />
           </div>
         </div>
 
-        <button type="submit" disabled={saving}>
-          {saving ? 'Saving...' : 'Create work order'}
-        </button>
-        {error && <p>{error}</p>}
+        <div className="field">
+          <label htmlFor="customerComplaint">Customer complaint</label>
+          <textarea
+            id="customerComplaint"
+            name="customerComplaint"
+            rows="4"
+            placeholder="What the customer says is wrong, in their words"
+            value={form.customerComplaint}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className="form-actions">
+          <button type="submit" className="btn" disabled={saving}>
+            {saving ? 'Saving...' : 'Create work order'}
+          </button>
+          <Link to="/" className="btn btn-secondary">Cancel</Link>
+        </div>
+        {error && <p className="message message-error" role="alert">{error}</p>}
       </form>
     </div>
   );

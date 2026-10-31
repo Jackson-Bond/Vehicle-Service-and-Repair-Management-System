@@ -32,22 +32,57 @@ export default function Login({ onLogin }) {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h1>Login</h1>
-      <div>
-        <label>Shop ID </label>
-        <input value={shopId} onChange={(change) => setShopId(change.target.value)} />
-      </div>
-      <div>
-        <label>Employee Code </label>
-        <input inputMode="numeric" value={employeeCode} onChange={(change) => setEmployeeCode(change.target.value)} />
-      </div>
-      <div>
-        <label>PIN </label>
-        <input type="password" value={pin} onChange={(e) => setPin(e.target.value)} />
-      </div>
-      <button type="submit">Log In</button>
-      {error && <p>{error}</p>}
-    </form>
+    <div className="login-screen">
+      <section className="login-side">
+        <h1>Shop Manager</h1>
+        <p>Track every vehicle from service request to completed repair.</p>
+      </section>
+
+      <main className="login-main">
+        <form className="login-form form" onSubmit={handleSubmit}>
+          <div>
+            <h2>Log in</h2>
+            <p className="muted">Use the employee code and PIN your manager gave you.</p>
+          </div>
+
+          <div className="field">
+            <label htmlFor="shopId">Shop ID</label>
+            <input
+              id="shopId"
+              inputMode="numeric"
+              value={shopId}
+              onChange={(change) => setShopId(change.target.value)}
+              required
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="employeeCode">Employee code</label>
+            <input
+              id="employeeCode"
+              inputMode="numeric"
+              value={employeeCode}
+              onChange={(change) => setEmployeeCode(change.target.value)}
+              required
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="pin">PIN</label>
+            <input
+              id="pin"
+              className="pin-input"
+              type="password"
+              inputMode="numeric"
+              autoComplete="current-password"
+              value={pin}
+              onChange={(e) => setPin(e.target.value)}
+              required
+            />
+          </div>
+
+          <button type="submit" className="btn">Log in</button>
+          {error && <p className="message message-error" role="alert">{error}</p>}
+        </form>
+      </main>
+    </div>
   );
 }

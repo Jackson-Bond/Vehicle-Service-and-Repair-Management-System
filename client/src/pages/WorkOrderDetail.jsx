@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { STATUS_LABELS, PROGRESS_LABELS } from '../statuses.js';
+import StatusBadge from '../components/StatusBadge.jsx';
 
 const money = (value) => `$${Number(value).toFixed(2)}`;
 
@@ -183,7 +184,7 @@ export default function WorkOrderDetail({ session, onLogout }) {
     );
   }
 
-  if (!workOrder) return <p>Loading...</p>;
+  if (!workOrder) return <div className="page"><p className="muted">Loading work order...</p></div>;
 
   const status = workOrder.status;
   const canEditServices = workOrder.canEdit && status === 'diagnosis';
@@ -200,264 +201,365 @@ export default function WorkOrderDetail({ session, onLogout }) {
     (sum, line) => sum + Number(line.unitPrice) * line.quantity,
     0
   );
+  const { vehicle, customer } = workOrder;
   return (
-    <div>
-      <Link to="/">← Back</Link>
-      <h1>Work Order #{workOrder.id}</h1>
+    <div className="page">
+      <Link to="/" className="back-link">Back to work orders</Link>
 
-      <table border="1">
-        <tbody>
-          <tr>
-            <th>Customer</th>
-            <td>
-              {workOrder.customer.name}
-              {workOrder.customer.phone ? ` (${workOrder.customer.phone})` : ''}
-              {workOrder.customer.email ? ` ${workOrder.customer.email}` : ''}
-            </td>
-          </tr>
-          <tr>
-            <th>Vehicle</th>
-            <td>
-              {workOrder.vehicle.year} {workOrder.vehicle.make} {workOrder.vehicle.model} - VIN {workOrder.vehicle.vin}
-            </td>
-          </tr>
-          <tr>
-            <th>Status</th>
-            <td>
-              {STATUS_LABELS[workOrder.status] ?? workOrder.status}
-            </td>
-          </tr>
-          <tr><th>Mileage in</th><td>{workOrder.mileageIn ?? '-'}</td></tr>
-          <tr><th>Technician</th><td>{workOrder.technician?.name ?? 'Unassigned'}</td></tr>
-          <tr><th>Created by</th><td>{workOrder.creator?.user?.name ?? '-'}</td></tr>
-          <tr><th>Created</th><td>{new Date(workOrder.createdAt).toLocaleString()}</td></tr>
-          {workOrder.completedAt && (
-            <tr><th>Completed</th><td>{new Date(workOrder.completedAt).toLocaleString()}</td></tr>
-          )}
-          <tr><th>Customer complaint</th><td>{workOrder.customerComplaint ?? '-'}</td></tr>
-        </tbody>
-      </table>
+      <div className="wo-header">
+        <h1 className="ro ro-large">#{workOrder.id}</h1>
+        <StatusBadge status={workOrder.status} />
+      </div>
+      <p className="wo-subtitle">
+        {vehicle.year} {vehicle.make} {vehicle.model} for {customer.name}
+      </p>
 
       {workOrder.allowedNextStatuses?.length > 0 && (
-      <div>
-        <p>Move to:</p>
-        {workOrder.allowedNextStatuses
-          ?.filter((s) => s !== 'approved')
-          .map((s) => (
-          <button
-            key={s}
-            onClick={() => changeStatus(s)}
-            disabled={s === 'completed' && pendingTodo}
-          >
-            {STATUS_LABELS[s]}
-          </button>
-        ))}
-      </div>
-    )}
-    {statusMessage && <p>{statusMessage}</p>}
-
-      <h2>Diagnosis</h2>
-      {editable ? (
-        <form onSubmit={saveDiagnosis}>
-          <div>
-            <label>Diagnosis</label>
-            <div>
-              <textarea
-                rows="4"
-                cols="50"
-                value={diagnosisForm.diagnosis}
-                onChange={(e) => setDiagnosisForm({ ...diagnosisForm, diagnosis: e.target.value })}
-                required
-              />
-            </div>
-          </div>
-          <div>
-            <label>Recommended repairs</label>
-            <div>
-              <textarea
-                rows="4"
-                cols="50"
-                value={diagnosisForm.recommendedRepairs}
-                onChange={(e) => setDiagnosisForm({ ...diagnosisForm, recommendedRepairs: e.target.value })}
-              />
-            </div>
-          </div>
-          <button type="submit" disabled={savingDiagnosis}>
-            {savingDiagnosis ? 'Saving...' : 'Save diagnosis'}
-          </button>
-          {diagnosisMessage && <p>{diagnosisMessage}</p>}
-        </form>
-      ) : (
-        <div>
-          <p><strong>Diagnosis:</strong> {workOrder.diagnosis ?? 'Not recorded yet'}</p>
-          <p><strong>Recommended repairs:</strong> {workOrder.notes ?? 'None'}</p>
-        </div>
-      )}
-
-      <h2>Parts Used</h2>
-      <table border="1">
-        <thead>
-          <tr>
-            <th>Part #</th>
-            <th>Name</th>
-            <th>Qty</th>
-            <th>Unit price</th>
-            <th>Line total</th>
-            {editable && <th></th>}
-          </tr>
-        </thead>
-        <tbody>
-          {workOrder.parts.map((line) => (
-            <tr key={line.partId}>
-              <td>{line.part.partNumber}</td>
-              <td>{line.part.name}</td>
-              <td>{line.quantity}</td>
-              <td>{money(line.unitPrice)}</td>
-              <td>{money(Number(line.unitPrice) * line.quantity)}</td>
-              {editable && (
-                <td><button onClick={() => removePart(line.partId)}>Remove</button></td>
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {workOrder.parts.length === 0 && <p>No parts recorded.</p>}
-      <p>Parts total: {money(partsTotal)}</p>
-
-      {editable && (
-        <form onSubmit={addPart}>
-          <select
-            value={partForm.partId}
-            onChange={(e) => setPartForm({ ...partForm, partId: e.target.value })}
-          >
-            <option value="">(select a part)</option>
-            {parts.map((p) => (
-              <option key={p.id} value={p.id} disabled={p.quantityInStock === 0}>
-                {p.partNumber} - {p.name} - {money(p.price)} ({p.quantityInStock} in stock)
-              </option>
+        <div className="form-actions">
+          <span className="muted">Move to:</span>
+          {workOrder.allowedNextStatuses
+            .filter((nextStatus) => nextStatus !== 'approved')
+            .map((nextStatus) => (
+              <button
+                key={nextStatus}
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => changeStatus(nextStatus)}
+                disabled={nextStatus === 'completed' && pendingTodo}
+              >
+                {STATUS_LABELS[nextStatus] ?? nextStatus}
+              </button>
             ))}
-          </select>{' '}
-          <input
-            type="number"
-            min="1"
-            step="1"
-            value={partForm.quantity}
-            onChange={(e) => setPartForm({ ...partForm, quantity: e.target.value })}
-            style={{ width: '4em' }}
-          />{' '}
-          <button type="submit" disabled={savingPart}>
-            {savingPart ? 'Adding...' : 'Add part'}
-          </button>
-          {partMessage && <p>{partMessage}</p>}
-        </form>
-      )}
-
-      <h2>Services</h2>
-
-      {status === 'customer_approval' ? (
-        <div>
-          <p>Select the services the customer approves:</p>
-          <table border="1">
-            <thead><tr><th></th><th>Service</th><th>Price</th></tr></thead>
-            <tbody>
-              {workOrder.services.map((line) => (
-                <tr key={line.serviceId}>
-                  <td>
-                    <input
-                      type="checkbox"
-                      checked={selectedServiceIds.includes(line.serviceId)}
-                      onChange={() => toggleService(line.serviceId)}
-                    />
-                  </td>
-                  <td>{line.service.name}</td>
-                  <td>{money(line.price)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <button
-            onClick={() => changeStatus('approved', { approvedServiceIds: selectedServiceIds })}
-            disabled={selectedServiceIds.length === 0}
-          >
-            Approve selected services
-          </button>
         </div>
-      ) : (
-        <table border="1">
-          <thead>
-            <tr>
-              <th>Service</th>
-              <th>Price</th>
-              <th>Notes</th>
-              {showTodo && <th>Customer</th>}
-              {canEditServices && <th></th>}
-            </tr>
-          </thead>
-          <tbody>
-            {workOrder.services.map((line) => (
-              <tr key={line.serviceId}>
-                <td>{line.service.name}</td>
-                <td>{money(line.price)}</td>
-                <td>{line.notes ?? ''}</td>
-                {showTodo && <td>{line.approved ? 'Approved' : 'Not Approved'}</td>}
-                {canEditServices && (
-                  <td><button onClick={() => removeService(line.serviceId)}>Remove</button></td>
+      )}
+      {statusMessage && <p className="message message-error" role="alert">{statusMessage}</p>}
+
+      <div className="wo-layout">
+        <div className="wo-main">
+          <section className="panel">
+            <h2 className="section-head">Customer complaint</h2>
+            {workOrder.customerComplaint
+              ? <p className="complaint-block">{workOrder.customerComplaint}</p>
+              : <p className="muted">No complaint recorded.</p>}
+          </section>
+
+          <section className="panel">
+            <h2 className="section-head">Diagnosis</h2>
+            {editable ? (
+              <form className="form" onSubmit={saveDiagnosis}>
+                <div className="field">
+                  <label htmlFor="diagnosis">Findings</label>
+                  <textarea
+                    id="diagnosis"
+                    rows="4"
+                    placeholder="What you found when inspecting the vehicle"
+                    value={diagnosisForm.diagnosis}
+                    onChange={(e) => setDiagnosisForm({ ...diagnosisForm, diagnosis: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="recommendedRepairs">Recommended repairs</label>
+                  <textarea
+                    id="recommendedRepairs"
+                    rows="3"
+                    placeholder="Repairs to quote to the customer"
+                    value={diagnosisForm.recommendedRepairs}
+                    onChange={(e) => setDiagnosisForm({ ...diagnosisForm, recommendedRepairs: e.target.value })}
+                  />
+                </div>
+                <div className="form-actions">
+                  <button type="submit" className="btn" disabled={savingDiagnosis}>
+                    {savingDiagnosis ? 'Saving...' : 'Save diagnosis'}
+                  </button>
+                </div>
+                {diagnosisMessage && (
+                  <p
+                    className={`message ${diagnosisMessage === 'Diagnosis saved.' ? 'message-success' : 'message-error'}`}
+                    role="status"
+                  >
+                    {diagnosisMessage}
+                  </p>
                 )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-      {workOrder.services.length === 0 && <p>No services recorded.</p>}
-      <p>Services total: {money(servicesTotal)}</p>
+              </form>
+            ) : (
+              <div className="readout">
+                <div>
+                  <h3>Findings</h3>
+                  <p>{workOrder.diagnosis ?? <span className="muted">Not recorded yet</span>}</p>
+                </div>
+                <div>
+                  <h3>Recommended repairs</h3>
+                  <p>{workOrder.notes ?? <span className="muted">None</span>}</p>
+                </div>
+              </div>
+            )}
+          </section>
 
-      {canEditServices && (
-        <form onSubmit={addService}>
-          <select value={serviceId} onChange={(e) => setServiceId(e.target.value)}>
-            <option value="">(select a service)</option>
-            {services
-              .filter((service) => !workOrder.services.some((line) => line.serviceId === service.id))
-              .map((service) => (
-                <option key={service.id} value={service.id}>
-                  {service.name} - {money(service.defaultPrice)}
-                </option>
-              ))}
-          </select>{' '}
-          <button type="submit">Add service</button>
-        </form>
-      )}
-      {serviceMessage && <p>{serviceMessage}</p>}
+          <section className="panel">
+            <div className="section-head">
+              <h2>Parts used</h2>
+              <span className="muted">{money(partsTotal)}</span>
+            </div>
 
-      {showTodo && (
-        <div>
-          <h2>To-do</h2>
-          <table border="1">
-            <thead><tr><th>Service</th><th>Progress</th></tr></thead>
-            <tbody>
-              {todo.map((line) => (
-                <tr key={line.serviceId}>
-                  <td>{line.service.name}</td>
-                  <td>
-                    {canEditProgress ? (
-                      <select
-                        value={line.progress}
-                        onChange={(e) => setProgress(line.serviceId, e.target.value)}
-                      >
-                        {Object.entries(PROGRESS_LABELS).map(([value, label]) => (
-                          <option key={value} value={value}>{label}</option>
+            {workOrder.parts.length > 0 ? (
+              <div className="table-wrap">
+                <table className="data">
+                  <thead>
+                    <tr>
+                      <th>Part</th>
+                      <th className="num">Qty</th>
+                      <th className="num">Unit price</th>
+                      <th className="num">Total</th>
+                      {editable && <th><span className="sr-only">Remove</span></th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {workOrder.parts.map((line) => (
+                      <tr key={line.partId}>
+                        <td>
+                          <div>{line.part.name}</div>
+                          <div className="muted">{line.part.partNumber}</div>
+                        </td>
+                        <td className="num">{line.quantity}</td>
+                        <td className="num">{money(line.unitPrice)}</td>
+                        <td className="num">{money(Number(line.unitPrice) * line.quantity)}</td>
+                        {editable && (
+                          <td className="num">
+                            <button type="button" className="btn btn-quiet" onClick={() => removePart(line.partId)}>
+                              Remove
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="muted">No parts recorded.</p>
+            )}
+
+            {editable && (
+              <form className="add-part" onSubmit={addPart}>
+                <div className="field">
+                  <label htmlFor="partId">Add a part</label>
+                  <select
+                    id="partId"
+                    value={partForm.partId}
+                    onChange={(e) => setPartForm({ ...partForm, partId: e.target.value })}
+                  >
+                    <option value="">Choose a part</option>
+                    {parts.map((p) => (
+                      <option key={p.id} value={p.id} disabled={p.quantityInStock === 0}>
+                        {p.partNumber} {p.name}, {money(p.price)} ({p.quantityInStock} in stock)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label htmlFor="quantity">Qty</label>
+                  <input
+                    id="quantity"
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={partForm.quantity}
+                    onChange={(e) => setPartForm({ ...partForm, quantity: e.target.value })}
+                  />
+                </div>
+                <button type="submit" className="btn btn-secondary" disabled={savingPart}>
+                  {savingPart ? 'Adding...' : 'Add part'}
+                </button>
+              </form>
+            )}
+            {partMessage && <p className="message message-error" role="alert" style={{ marginTop: 12 }}>{partMessage}</p>}
+          </section>
+
+          <section className="panel">
+            <div className="section-head">
+              <h2>Services</h2>
+              <span className="muted">{money(servicesTotal)}</span>
+            </div>
+            {status === 'customer_approval' ? (
+              <div>
+                <p>Select the services the customer approves:</p>
+                <div className="table-wrap">
+                  <table className="data">
+                    <thead><tr><th></th><th>Service</th><th className="num">Price</th></tr></thead>
+                    <tbody>
+                      {workOrder.services.map((line) => (
+                        <tr key={line.serviceId}>
+                          <td>
+                            <input
+                              type="checkbox"
+                              checked={selectedServiceIds.includes(line.serviceId)}
+                              onChange={() => toggleService(line.serviceId)}
+                            />
+                          </td>
+                          <td>{line.service.name}</td>
+                          <td className="num">{money(line.price)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => changeStatus('approved', { approvedServiceIds: selectedServiceIds })}
+                  disabled={selectedServiceIds.length === 0}
+                >
+                  Approve selected services
+                </button>
+              </div>
+            ) : (
+              <>
+                {workOrder.services.length > 0 ? (
+                  <div className="table-wrap">
+                    <table className="data">
+                      <thead>
+                        <tr>
+                          <th>Service</th>
+                          <th>Notes</th>
+                          {showTodo && <th>Customer</th>}
+                          <th className="num">Price</th>
+                          {canEditServices && <th><span className="sr-only">Remove</span></th>}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {workOrder.services.map((line) => (
+                          <tr key={line.serviceId}>
+                            <td>{line.service.name}</td>
+                            <td className="muted">{line.notes ?? ''}</td>
+                            {showTodo && <td>{line.approved ? 'Approved' : 'Not approved'}</td>}
+                            <td className="num">{money(line.price)}</td>
+                            {canEditServices && (
+                              <td className="num">
+                                <button type="button" className="btn btn-quiet" onClick={() => removeService(line.serviceId)}>
+                                  Remove
+                                </button>
+                              </td>
+                            )}
+                          </tr>
                         ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="muted">No services recorded.</p>
+                )}
+                {canEditServices && (
+                  <form className="add-part" onSubmit={addService}>
+                    <div className="field">
+                      <label htmlFor="serviceId">Add a service</label>
+                      <select id="serviceId" value={serviceId} onChange={(e) => setServiceId(e.target.value)}>
+                        <option value="">Choose a service</option>
+                        {services
+                          .filter((service) => !workOrder.services.some((line) => line.serviceId === service.id))
+                          .map((service) => (
+                            <option key={service.id} value={service.id}>
+                              {service.name}, {money(service.defaultPrice)}
+                            </option>
+                          ))}
                       </select>
-                    ) : (
-                      PROGRESS_LABELS[line.progress]
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {status === 'in_repair' && pendingTodo && <p>All services must be completed to complete this repair.</p>}
+                    </div>
+                    <button type="submit" className="btn btn-secondary">Add service</button>
+                  </form>
+                )}
+              </>
+            )}
+            {serviceMessage && <p className="message message-error" role="alert">{serviceMessage}</p>}
+          </section>
+
+          {showTodo && (
+            <section className="panel">
+              <h2 className="section-head">To-do</h2>
+              <div className="table-wrap">
+                <table className="data">
+                  <thead><tr><th>Service</th><th>Progress</th></tr></thead>
+                  <tbody>
+                    {todo.map((line) => (
+                      <tr key={line.serviceId}>
+                        <td>{line.service.name}</td>
+                        <td>
+                          {canEditProgress ? (
+                            <select
+                              value={line.progress}
+                              onChange={(e) => setProgress(line.serviceId, e.target.value)}
+                            >
+                              {Object.entries(PROGRESS_LABELS).map(([value, label]) => (
+                                <option key={value} value={value}>{label}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            PROGRESS_LABELS[line.progress]
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {status === 'in_repair' && pendingTodo && (
+                <p className="muted">All services must be completed to complete this repair.</p>
+              )}
+            </section>
+          )}
         </div>
-      )}
+
+        <aside className="wo-side">
+          <section className="panel">
+            <dl className="facts">
+              <div>
+                <dt>Customer</dt>
+                <dd>
+                  {customer.name}
+                  {customer.phone && <div className="muted">{customer.phone}</div>}
+                  {customer.email && <div className="muted">{customer.email}</div>}
+                </dd>
+              </div>
+              <div>
+                <dt>Vehicle</dt>
+                <dd>
+                  {vehicle.year} {vehicle.make} {vehicle.model}
+                  <div className="muted">VIN {vehicle.vin}</div>
+                </dd>
+              </div>
+              <div>
+                <dt>Mileage in</dt>
+                <dd>{workOrder.mileageIn != null ? workOrder.mileageIn.toLocaleString() : <span className="muted">Not recorded</span>}</dd>
+              </div>
+              <div>
+                <dt>Technician</dt>
+                <dd>{workOrder.technician?.name ?? <span className="muted">Unassigned</span>}</dd>
+              </div>
+              <div>
+                <dt>Opened</dt>
+                <dd>
+                  {new Date(workOrder.createdAt).toLocaleString()}
+                  {workOrder.creator?.user?.name && <div className="muted">by {workOrder.creator.user.name}</div>}
+                </dd>
+              </div>
+              {workOrder.completedAt && (
+                <div>
+                  <dt>Completed</dt>
+                  <dd>{new Date(workOrder.completedAt).toLocaleString()}</dd>
+                </div>
+              )}
+            </dl>
+          </section>
+
+          <section className="panel">
+            <h2 className="section-head">Charges</h2>
+            <dl className="totals">
+              <div><dt>Parts</dt><dd>{money(partsTotal)}</dd></div>
+              <div><dt>Services</dt><dd>{money(servicesTotal)}</dd></div>
+              <div className="grand"><dt>Total</dt><dd>{money(partsTotal + servicesTotal)}</dd></div>
+            </dl>
+          </section>
+        </aside>
+      </div>
     </div>
   );
 }

@@ -27,11 +27,12 @@ export default function RegisterCustomer({ session, onLogout }) {
     setSaving(true);
 
     try {
-      await api('/api/customers', session.token, {
+      const customer = await api('/api/customers', session.token, {
         method: 'POST',
         body: JSON.stringify(form),
       });
-      navigate('/');
+      // open the new customer's page so their vehicle can be added next
+      navigate(`/customers/${customer.id}`);
 
     } catch (err) {
       // session expired
@@ -85,7 +86,7 @@ export default function RegisterCustomer({ session, onLogout }) {
           <button type="submit" className="btn" disabled={saving}>
             {saving ? 'Saving...' : 'Register customer'}
           </button>
-          <Link to="/" className="btn btn-secondary">Cancel</Link>
+          <Link to="/customers" className="btn btn-secondary">Cancel</Link>
         </div>
         {error && <p className="message message-error" role="alert">{error}</p>}
       </form>

@@ -966,3 +966,11 @@ a.row-title:hover {
     grid-column: 1 / -1;
   }
 }
+
+.status-actions {
+  margin-bottom: 24px;
+}
+
+.status-actions+.message {
+  margin: -8px 0 24px;
+}

@@ -215,7 +215,7 @@ export default function WorkOrderDetail({ session, onLogout }) {
       </p>
 
       {workOrder.allowedNextStatuses?.length > 0 && (
-        <div className="form-actions">
+        <div className="form-actions status-actions">
           <span className="muted">Move to:</span>
           {workOrder.allowedNextStatuses
             .filter((nextStatus) => nextStatus !== 'approved')

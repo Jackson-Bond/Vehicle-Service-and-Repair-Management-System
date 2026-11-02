@@ -11,7 +11,7 @@ export default function Layout({ session, onLogout, children }) {
                     <nav className="main-nav" aria-label="Main">
                         <NavLink to="/" end>Work orders</NavLink>
                         <NavLink to="/work-orders/new">New work order</NavLink>
-                        <NavLink to="/customers/new">Register customer</NavLink>
+                        <NavLink to="/customers">Customers</NavLink>
                         <NavLink to="/vehicles/new">Register vehicle</NavLink>
                         {session.role === 'manager' && <NavLink to="/users/new">Add user</NavLink>}
                     </nav>

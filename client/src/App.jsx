@@ -7,6 +7,10 @@ import RegisterVehicle from './pages/RegisterVehicle.jsx';
 import CreateWorkOrder from './pages/CreateWorkOrder.jsx';
 import WorkOrderDetail from './pages/WorkOrderDetail.jsx';
 import AddUser from './pages/AddUser.jsx';
+import Customers from './pages/Customers.jsx';
+import CustomerDetail from './pages/CustomerDetail.jsx';
+import VehicleDetail from './pages/VehicleDetail.jsx';
+
 import Layout from './components/Layout.jsx';
 
 export default function App() {
@@ -20,8 +24,11 @@ export default function App() {
     <Layout session={session} onLogout={logout}>
       <Routes>
         <Route path="/" element={<Home session={session} onLogout={logout} />} />
+        <Route path="/customers" element={<Customers session={session} onLogout={logout} />} />
         <Route path="/customers/new" element={<RegisterCustomer session={session} onLogout={logout} />} />
+        <Route path="/customers/:id" element={<CustomerDetail session={session} onLogout={logout} />} />
         <Route path="/vehicles/new" element={<RegisterVehicle session={session} />} />
+        <Route path="/vehicles/:id" element={<VehicleDetail session={session} onLogout={logout} />} />
         <Route path="/work-orders/new" element={<CreateWorkOrder session={session} onLogout={logout} />} />
         <Route path="/work-orders/:id" element={<WorkOrderDetail session={session} onLogout={logout} />} />
         {session.role === 'manager' && (

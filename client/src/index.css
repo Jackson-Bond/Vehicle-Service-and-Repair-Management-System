@@ -901,3 +901,76 @@ a.ro:hover {
   white-space: nowrap;
   border: 0;
 }
+
+/* ---------- Customers and service history ---------- */
+
+.row-title {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+a.row-title:hover {
+  text-decoration: underline;
+}
+
+.history-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: 12px;
+  align-items: start;
+  margin-bottom: 16px;
+}
+
+.history-filters input,
+.history-filters select {
+  height: 44px;
+}
+
+.history-filters .btn {
+  align-self: end;
+  height: 44px;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.link-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.link-list li+li {
+  border-top: 1px solid var(--rule);
+}
+
+.link-list a {
+  display: grid;
+  gap: 2px;
+  padding: 10px 0;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.link-list a:hover .row-title {
+  text-decoration: underline;
+}
+
+@media (max-width: 720px) {
+  .history-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .history-filters .field:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+}
+
+.status-actions {
+  margin-bottom: 24px;
+}
+
+.status-actions+.message {
+  margin: -8px 0 24px;
+}

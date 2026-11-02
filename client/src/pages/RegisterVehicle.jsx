@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api.js';
 
 export default function RegisterVehicle({ session, onLogout }) {
   const navigate = useNavigate();
+  // set when opened from a customer's page with "Add vehicle"
+  const [searchParams] = useSearchParams();
+  const presetCustomerId = searchParams.get('customerId');
 
   const [form, setForm] = useState({
     vin: '',
@@ -26,12 +29,25 @@ export default function RegisterVehicle({ session, onLogout }) {
     setForm({ ...form, [change.target.name]: change.target.value });
   }
 
+  // pre-select the customer when coming from their page
+  useEffect(() => {
+    if (!presetCustomerId) return;
+    api(`/api/customers/${presetCustomerId}`, session.token)
+      .then((customer) => {
+        setSelectedCustomer(customer);
+        setSearch(customer.name);
+      })
+      .catch((err) => {
+        if (err.status === 401) onLogout();
+      });
+  }, [presetCustomerId, session.token]);
+
   // load up to 5 matching customers whenever the dropdown is open or the search text changes
   useEffect(() => {
     if (!open) return;
 
     // ignore responses that arrive after a newer search started
-    let cancelled = false; 
+    let cancelled = false;
 
     const timer = setTimeout(() => {
       api(`/api/customers?search=${encodeURIComponent(search)}&limit=5`, session.token)
@@ -42,7 +58,7 @@ export default function RegisterVehicle({ session, onLogout }) {
           if (error.status === 401) onLogout();
           else if (!cancelled) setError(error.message);
         });
-    // wait for a pause in typing before searching
+      // wait for a pause in typing before searching
     }, 250);
 
     return () => {
@@ -90,9 +106,11 @@ export default function RegisterVehicle({ session, onLogout }) {
         method: 'POST',
         body: JSON.stringify({ ...form, customerId: selectedCustomer.id }),
       });
-      navigate('/');
+      // back to the customer, where the new vehicle now shows
+      navigate(`/customers/${selectedCustomer.id}`);
     } catch (err) {
-      setError(err.message);
+      if (err.status === 401) onLogout();
+      else setError(err.message);
       setSaving(false);
     }
   }
@@ -172,7 +190,7 @@ export default function RegisterVehicle({ session, onLogout }) {
           <button type="submit" className="btn" disabled={saving}>
             {saving ? 'Saving...' : 'Register vehicle'}
           </button>
-          <Link to="/" className="btn btn-secondary">Cancel</Link>
+          <Link to={presetCustomerId ? `/customers/${presetCustomerId}` : '/customers'} className="btn btn-secondary">Cancel</Link>
         </div>
         {error && <p className="message message-error" role="alert">{error}</p>}
       </form>

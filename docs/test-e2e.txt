@@ -1,0 +1,45 @@
+
+> server@1.0.0 test:e2e
+> node test/workflow.e2e.mjs
+
+PASS login works for manager and technician
+PASS FR-04 create service request, status service_requested
+PASS FR-04 unknown customer 404
+PASS FR-06 assign technician
+PASS FR-06 reassign technician is logged
+PASS FR-06 technician cannot reassign (403)
+PASS FR-07 other technician cannot see the work order
+PASS FR-05 check in with mileage and notes
+PASS FR-05 mileage lower than last recorded is rejected
+PASS FR-05 second check-in blocked
+PASS FR-08 diagnosis only after moving to diagnosis stage
+PASS approval request needs a service
+PASS FR-09/15 add service and part, estimate computed
+PASS FR-22 estimate_ready notification logged
+PASS FR-23 channel follows preferred contact method (Maria = sms)
+PASS FR-11 repair blocked before approval
+PASS FR-10 technician cannot record approval (403)
+PASS FR-10 approval needs a method
+PASS FR-10 approval recorded with method, recorder, time
+PASS FR-11 repair starts after approval
+PASS FR-12 adding a service during repair requires new approval
+PASS FR-12 cannot complete without approval
+PASS FR-12 re-approval keeps earlier approved work
+PASS FR-12 parts that raise the total need approval; declining extra returns to repair
+PASS FR-13 progress updates then completion
+PASS FR-18 invoice from completed labor and parts
+PASS technician cannot see invoice (403)
+PASS FR-19 invoice PDF
+PASS FR-19 email invoice is logged when no gateway is configured
+PASS FR-19 cannot close before payment
+PASS FR-19 record payment then close
+PASS FR-13 status history complete
+PASS FR-20/21 vehicle history lists the job, filters by service
+PASS FR-14 manager sees work order list
+PASS FR-25 manager edits, deactivates, and deactivated user is locked out
+PASS FR-25 cannot deactivate a technician with open work / self
+PASS FR-26 audit log records actions; PIN never logged; manager only
+PASS NFR-08 insert-only history and audit enforced by the database
+PASS shop tax rate setting
+
+39 passed

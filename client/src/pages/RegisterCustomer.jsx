@@ -9,7 +9,6 @@ export default function RegisterCustomer({ session, onLogout }) {
     name: '',
     phone: '',
     email: '',
-    preferredContactMethod: '',
   });
 
   const [error, setError] = useState('');
@@ -63,25 +62,9 @@ export default function RegisterCustomer({ session, onLogout }) {
           </div>
           <div className="field">
             <label htmlFor="email">Email</label>
-            <input id="email" name="email" type="email" value={form.email} onChange={handleChange} />
+            <input name="email" type="email" value={form.email} onChange={handleChange} required />
           </div>
         </div>
-        <div className="field">
-          <label htmlFor="preferredContactMethod">Preferred contact method</label>
-          <select
-            id="preferredContactMethod"
-            name="preferredContactMethod"
-            value={form.preferredContactMethod}
-            onChange={handleChange}
-          >
-            <option value="">No preference</option>
-            <option value="phone">Phone call</option>
-            <option value="sms">Text message</option>
-            <option value="email">Email</option>
-          </select>
-          <span className="hint">Used for updates about their vehicle.</span>
-        </div>
-
         <div className="form-actions">
           <button type="submit" className="btn" disabled={saving}>
             {saving ? 'Saving...' : 'Register customer'}

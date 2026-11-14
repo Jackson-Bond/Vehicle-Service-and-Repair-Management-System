@@ -62,7 +62,6 @@ model Customer {
   name                   String
   phone                  String?
   email                  String?
-  preferredContactMethod String? @map("preferred_contact_method")
 
   shop       Shop              @relation(fields: [shopId], references: [id])
   vehicles   CustomerVehicle[]

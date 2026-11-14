@@ -45,13 +45,13 @@ async function main() {
 
   // customers (Maria uses both shops and exists as a separate row at each shop)
   const mariaA = await prisma.customer.create({
-    data: { shopId: shopA.id, name: 'Maria Lopez', phone: '555-1001', email: 'maria@example.com', preferredContactMethod: 'sms' },
+    data: { shopId: shopA.id, name: 'Maria Lopez', phone: '555-1001', email: 'maria@example.com'},
   });
   const davidA = await prisma.customer.create({
-    data: { shopId: shopA.id, name: 'David Chen', phone: '555-1002', email: 'david@example.com', preferredContactMethod: 'email' },
+    data: { shopId: shopA.id, name: 'David Chen', phone: '555-1002', email: 'david@example.com'},
   });
   const mariaB = await prisma.customer.create({
-    data: { shopId: shopB.id, name: 'Maria Lopez', phone: '555-1001', email: 'maria@example.com', preferredContactMethod: 'email' },
+    data: { shopId: shopB.id, name: 'Maria Lopez', phone: '555-1001', email: 'maria@example.com'},
   });
 
   // vehicles (global; VIN unique across the platform)

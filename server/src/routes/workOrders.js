@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import prisma from '../lib/prisma.js';
 import { allowedNext } from '../workOrderStatus.js';
+import { notifyStatusChange } from '../messaging/notify.js';
 
 const router = Router();
 const PROGRESS = ['not_started', 'in_progress', 'completed'];
@@ -122,6 +123,9 @@ router.post('/', async (req, res) => {
         customerComplaint: customerComplaint?.trim() || null,
       },
     });
+
+    // push to notificaitons
+    notifyStatusChange(workOrder.id);
     res.status(201).json(workOrder);
 
   } catch (err) {
@@ -437,6 +441,9 @@ router.patch('/:id/status', async (req, res) => {
         });
       }
     });
+
+    // send notification
+    notifyStatusChange(wo.id); 
 
     res.json(await buildDetail(req.user, wo.id));
   } catch (err) {

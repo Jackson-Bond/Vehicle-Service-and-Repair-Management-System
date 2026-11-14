@@ -3,8 +3,6 @@ import prisma from '../lib/prisma.js';
 import requireRole from '../middleware/requireRole.js';
 import { historyFilter, loadHistory } from '../serviceHistory.js';
 
-const CONTACT_METHODS = ['phone', 'sms', 'email'];
-
 const router = Router();
 
 function customerId(req) {
@@ -18,20 +16,16 @@ function findCustomer(req) {
   return prisma.customer.findFirst({ where: { id, shopId: req.user.shopId } });
 }
 
-function validateCustomer({ name, preferredContactMethod }) {
+function validateCustomer({ name }) {
   if (!name?.trim()) return 'Name is required';
-  if (preferredContactMethod && !CONTACT_METHODS.includes(preferredContactMethod)) {
-    return 'Invalid contact method';
-  }
   return null;
 }
 
-function customerData({ name, phone, email, preferredContactMethod }) {
+function customerData({ name, phone, email }) {
   return {
     name: name.trim(),
     phone: phone?.trim() || null,
     email: email?.trim() || null,
-    preferredContactMethod: preferredContactMethod || null,
   };
 }
 

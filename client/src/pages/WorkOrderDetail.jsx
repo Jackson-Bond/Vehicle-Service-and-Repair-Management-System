@@ -27,12 +27,26 @@ export default function WorkOrderDetail({ session, onLogout }) {
   const [serviceMessage, setServiceMessage] = useState('');
   const [selectedServiceIds, setSelectedServiceIds] = useState([]);
 
+  // check-in, approval, assignment, history, notifications, invoice
+  const [checkIn, setCheckIn] = useState({ mileageIn: '', conditionNotes: '' });
+  const [approvalMethod, setApprovalMethod] = useState('in_person');
+  const [approvalNote, setApprovalNote] = useState('');
+  const [technicians, setTechnicians] = useState([]);
+  const [technicianId, setTechnicianId] = useState('');
+  const [history, setHistory] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [invoice, setInvoice] = useState(null);
+  const [invoiceMessage, setInvoiceMessage] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [version, setVersion] = useState(0);
+
   function handleApiError(err, setMessage) {
     if (err.status === 401) onLogout();
     else setMessage(err.message);
   }
 
   function showWorkOrder(data) {
+    setVersion((v) => v + 1);
     setWorkOrder(data);
     setSelectedServiceIds(data.services.map((l) => l.serviceId));
     setDiagnosisForm({
@@ -60,6 +74,99 @@ export default function WorkOrderDetail({ session, onLogout }) {
     loadParts();
     loadServices();
   }, [id, session.token]);
+
+  const isManager = session.role === 'manager';
+
+  // history, notification log and invoice refresh after every change to the work order
+  useEffect(() => {
+    if (!workOrder) return;
+    api(`/api/work-orders/${id}/history`, session.token).then(setHistory).catch(() => {});
+    api(`/api/work-orders/${id}/notifications`, session.token).then(setNotifications).catch(() => {});
+    if (isManager && ['completed', 'closed'].includes(workOrder.status)) {
+      api(`/api/work-orders/${id}/invoice`, session.token)
+        .then(setInvoice)
+        .catch((err) => { if (err.status === 404) setInvoice(null); });
+    } else {
+      setInvoice(null);
+    }
+  }, [version]);
+
+  useEffect(() => {
+    if (!isManager) return;
+    api('/api/users?role=technician', session.token).then(setTechnicians).catch(() => {});
+  }, [isManager, session.token]);
+
+  async function assignTechnician(submit) {
+    submit.preventDefault();
+    if (!technicianId) return setStatusMessage('Choose a technician');
+    setStatusMessage('');
+    try {
+      showWorkOrder(await api(`/api/work-orders/${id}/technician`, session.token, {
+        method: 'PATCH',
+        body: JSON.stringify({ technicianId: Number(technicianId) }),
+      }));
+      setTechnicianId('');
+    } catch (err) {
+      handleApiError(err, setStatusMessage);
+    }
+  }
+
+  async function checkInVehicle(submit) {
+    submit.preventDefault();
+    await changeStatus('checked_in', {
+      mileageIn: checkIn.mileageIn === '' ? undefined : Number(checkIn.mileageIn),
+      conditionNotes: checkIn.conditionNotes,
+    });
+  }
+
+  async function createInvoice() {
+    setInvoiceMessage('');
+    try {
+      setInvoice(await api(`/api/work-orders/${id}/invoice`, session.token, { method: 'POST' }));
+      setVersion((v) => v + 1);
+    } catch (err) {
+      handleApiError(err, setInvoiceMessage);
+    }
+  }
+
+  async function recordPayment(status) {
+    setInvoiceMessage('');
+    try {
+      setInvoice(await api(`/api/work-orders/${id}/invoice/payment`, session.token, {
+        method: 'PATCH',
+        body: JSON.stringify({ status, method: status === 'paid' ? paymentMethod : undefined }),
+      }));
+    } catch (err) {
+      handleApiError(err, setInvoiceMessage);
+    }
+  }
+
+  async function openInvoicePdf() {
+    setInvoiceMessage('');
+    try {
+      const response = await fetch(`/api/work-orders/${id}/invoice/pdf`, {
+        headers: { Authorization: `Bearer ${session.token}` },
+      });
+      if (!response.ok) throw new Error('Could not load the invoice PDF');
+      const url = URL.createObjectURL(await response.blob());
+      window.open(url, '_blank');
+    } catch (err) {
+      setInvoiceMessage(err.message);
+    }
+  }
+
+  async function emailInvoice() {
+    setInvoiceMessage('');
+    try {
+      const result = await api(`/api/work-orders/${id}/invoice/email`, session.token, { method: 'POST' });
+      setInvoiceMessage(result.result === 'sent' ? 'Invoice emailed to the customer.'
+        : result.result === 'logged' ? 'Email gateway is not configured, so the message was logged only.'
+        : 'Email delivery failed; see the notification log.');
+      setVersion((v) => v + 1);
+    } catch (err) {
+      handleApiError(err, setInvoiceMessage);
+    }
+  }
 
   async function saveDiagnosis(submit) {
     submit.preventDefault();
@@ -188,6 +295,9 @@ export default function WorkOrderDetail({ session, onLogout }) {
 
   const status = workOrder.status;
   const canEditServices = workOrder.canEdit && status === 'diagnosis';
+  // services and parts may still be added during repair; the server then asks for a new approval
+  const canAddItems = workOrder.canEdit && ['diagnosis', 'in_repair'].includes(status);
+  const hadApproval = workOrder.approvals.some((a) => a.decision === 'approved');
   const canEditProgress = workOrder.canEdit && status === 'in_repair';
   const showTodo = ['approved', 'in_repair', 'completed', 'closed'].includes(status);
   const todo = workOrder.services.filter((line) => line.approved);
@@ -219,6 +329,10 @@ export default function WorkOrderDetail({ session, onLogout }) {
           <span className="muted">Move to:</span>
           {workOrder.allowedNextStatuses
             .filter((nextStatus) => nextStatus !== 'approved')
+            // handled by the check-in form, the approval panel and the invoice panel
+            .filter((nextStatus) => !(nextStatus === 'checked_in'))
+            .filter((nextStatus) => !(status === 'customer_approval' && ['declined', 'in_repair'].includes(nextStatus)))
+            .filter((nextStatus) => !(['declined', 'closed'].includes(nextStatus) && !isManager))
             .map((nextStatus) => (
               <button
                 key={nextStatus}
@@ -236,6 +350,93 @@ export default function WorkOrderDetail({ session, onLogout }) {
 
       <div className="wo-layout">
         <div className="wo-main">
+          {status === 'service_requested' && (
+            <section className="panel">
+              <h2 className="section-head">Check in vehicle</h2>
+              <form className="form" onSubmit={checkInVehicle}>
+                <div className="field">
+                  <label htmlFor="checkInMileage">Current mileage</label>
+                  <input
+                    id="checkInMileage"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={checkIn.mileageIn}
+                    onChange={(e) => setCheckIn({ ...checkIn, mileageIn: e.target.value })}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="conditionNotes">Condition notes</label>
+                  <textarea
+                    id="conditionNotes"
+                    rows="2"
+                    placeholder="Scratches, warning lights, items left in the car"
+                    value={checkIn.conditionNotes}
+                    onChange={(e) => setCheckIn({ ...checkIn, conditionNotes: e.target.value })}
+                  />
+                </div>
+                <div className="form-actions"><button type="submit" className="btn">Check in</button></div>
+              </form>
+            </section>
+          )}
+
+          {status === 'customer_approval' && (
+            <section className="panel">
+              <h2 className="section-head">Customer approval</h2>
+              {isManager ? (
+                <>
+                  <p className="muted">
+                    Estimate {money(workOrder.estimate.total)}
+                    {workOrder.approvedTotal != null && ` (previously approved ${money(workOrder.approvedTotal)})`}.
+                    Tick the services below, record how the customer answered, then approve or decline.
+                  </p>
+                  <div className="field">
+                    <label htmlFor="approvalMethod">Customer answered by</label>
+                    <select id="approvalMethod" value={approvalMethod} onChange={(e) => setApprovalMethod(e.target.value)}>
+                      <option value="in_person">In person</option>
+                      <option value="phone">Phone</option>
+                      <option value="sms">SMS</option>
+                      <option value="email">Email</option>
+                    </select>
+                  </div>
+                  <div className="field">
+                    <label htmlFor="approvalNote">Note (optional)</label>
+                    <input id="approvalNote" value={approvalNote} onChange={(e) => setApprovalNote(e.target.value)} />
+                  </div>
+                  <div className="form-actions">
+                    <button
+                      type="button"
+                      className="btn"
+                      disabled={selectedServiceIds.length === 0}
+                      onClick={() => changeStatus('approved', { approvedServiceIds: selectedServiceIds, approvalMethod, note: approvalNote })}
+                    >
+                      Record approval
+                    </button>
+                    {hadApproval ? (
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => changeStatus('in_repair', { approvalMethod, note: approvalNote })}
+                      >
+                        Decline extra work, continue repair
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => window.confirm('Record that the customer declined?') && changeStatus('declined', { approvalMethod, note: approvalNote })}
+                      >
+                        Record decline
+                      </button>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <p className="muted">Waiting for the front desk to record the customer's answer.</p>
+              )}
+            </section>
+          )}
+
           <section className="panel">
             <h2 className="section-head">Customer complaint</h2>
             {workOrder.customerComplaint
@@ -340,7 +541,7 @@ export default function WorkOrderDetail({ session, onLogout }) {
               <p className="muted">No parts recorded.</p>
             )}
 
-            {editable && (
+            {canAddItems && (
               <form className="add-part" onSubmit={addPart}>
                 <div className="field">
                   <label htmlFor="partId">Add a part</label>
@@ -383,7 +584,7 @@ export default function WorkOrderDetail({ session, onLogout }) {
             </div>
             {status === 'customer_approval' ? (
               <div>
-                <p>Select the services the customer approves:</p>
+                <p>Select the services the customer approves, then record the decision in the approval panel above.</p>
                 <div className="table-wrap">
                   <table className="data">
                     <thead><tr><th></th><th>Service</th><th className="num">Price</th></tr></thead>
@@ -404,14 +605,6 @@ export default function WorkOrderDetail({ session, onLogout }) {
                     </tbody>
                   </table>
                 </div>
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={() => changeStatus('approved', { approvedServiceIds: selectedServiceIds })}
-                  disabled={selectedServiceIds.length === 0}
-                >
-                  Approve selected services
-                </button>
               </div>
             ) : (
               <>
@@ -449,7 +642,7 @@ export default function WorkOrderDetail({ session, onLogout }) {
                 ) : (
                   <p className="muted">No services recorded.</p>
                 )}
-                {canEditServices && (
+                {canAddItems && (
                   <form className="add-part" onSubmit={addService}>
                     <div className="field">
                       <label htmlFor="serviceId">Add a service</label>
@@ -532,8 +725,27 @@ export default function WorkOrderDetail({ session, onLogout }) {
               </div>
               <div>
                 <dt>Technician</dt>
-                <dd>{workOrder.technician?.name ?? <span className="muted">Unassigned</span>}</dd>
+                <dd>
+                  {workOrder.technician?.name ?? <span className="muted">Unassigned</span>}
+                  {isManager && !['completed', 'closed', 'declined', 'cancelled'].includes(status) && (
+                    <form className="add-part" onSubmit={assignTechnician} style={{ marginTop: 8 }}>
+                      <select value={technicianId} onChange={(e) => setTechnicianId(e.target.value)} aria-label="Technician">
+                        <option value="">{workOrder.technician ? 'Reassign to...' : 'Assign to...'}</option>
+                        {technicians.filter((t) => t.id !== workOrder.assignedTechnician).map((t) => (
+                          <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
+                      </select>
+                      <button type="submit" className="btn btn-secondary">Save</button>
+                    </form>
+                  )}
+                </dd>
               </div>
+              {workOrder.conditionNotes && (
+                <div>
+                  <dt>Condition notes</dt>
+                  <dd>{workOrder.conditionNotes}</dd>
+                </div>
+              )}
               <div>
                 <dt>Opened</dt>
                 <dd>
@@ -551,12 +763,88 @@ export default function WorkOrderDetail({ session, onLogout }) {
           </section>
 
           <section className="panel">
-            <h2 className="section-head">Charges</h2>
+            <h2 className="section-head">Estimate</h2>
             <dl className="totals">
-              <div><dt>Parts</dt><dd>{money(partsTotal)}</dd></div>
-              <div><dt>Services</dt><dd>{money(servicesTotal)}</dd></div>
-              <div className="grand"><dt>Total</dt><dd>{money(partsTotal + servicesTotal)}</dd></div>
+              <div><dt>Labor</dt><dd>{money(workOrder.estimate.labor)}</dd></div>
+              <div><dt>Parts</dt><dd>{money(workOrder.estimate.parts)}</dd></div>
+              <div><dt>Tax ({(workOrder.estimate.taxRate * 100).toFixed(2)}%)</dt><dd>{money(workOrder.estimate.tax)}</dd></div>
+              <div className="grand"><dt>Total</dt><dd>{money(workOrder.estimate.total)}</dd></div>
+              {workOrder.approvedTotal != null && (
+                <div><dt>Approved</dt><dd>{money(workOrder.approvedTotal)}</dd></div>
+              )}
             </dl>
+          </section>
+
+          {isManager && ['completed', 'closed'].includes(status) && (
+            <section className="panel">
+              <h2 className="section-head">Invoice</h2>
+              {!invoice ? (
+                <button type="button" className="btn" onClick={createInvoice}>Generate invoice</button>
+              ) : (
+                <>
+                  <dl className="totals">
+                    <div><dt>Subtotal</dt><dd>{money(invoice.subtotal)}</dd></div>
+                    <div><dt>Tax</dt><dd>{money(invoice.tax)}</dd></div>
+                    <div className="grand"><dt>Total</dt><dd>{money(invoice.total)}</dd></div>
+                    <div>
+                      <dt>Payment</dt>
+                      <dd>{invoice.paymentStatus === 'paid' ? `Paid (${invoice.paymentMethod})` : 'Unpaid'}</dd>
+                    </div>
+                  </dl>
+                  <div className="form-actions">
+                    <button type="button" className="btn btn-secondary" onClick={openInvoicePdf}>View / print PDF</button>
+                    <button type="button" className="btn btn-secondary" onClick={emailInvoice}>Email PDF</button>
+                  </div>
+                  {status !== 'closed' && (
+                    invoice.paymentStatus === 'paid' ? (
+                      <button type="button" className="btn btn-quiet" onClick={() => recordPayment('unpaid')}>Mark unpaid</button>
+                    ) : (
+                      <div className="add-part">
+                        <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} aria-label="Payment method">
+                          <option value="card">Card</option>
+                          <option value="cash">Cash</option>
+                          <option value="check">Check</option>
+                          <option value="other">Other</option>
+                        </select>
+                        <button type="button" className="btn" onClick={() => recordPayment('paid')}>Record payment</button>
+                      </div>
+                    )
+                  )}
+                </>
+              )}
+              {invoiceMessage && <p className="message" role="status">{invoiceMessage}</p>}
+            </section>
+          )}
+
+          <section className="panel">
+            <h2 className="section-head">Status history</h2>
+            {history.length === 0 ? <p className="muted">No history yet.</p> : (
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                {history.map((h) => (
+                  <li key={h.id} style={{ marginBottom: 8 }}>
+                    <strong>{STATUS_LABELS[h.toStatus] ?? h.toStatus}</strong>
+                    <div className="muted">
+                      {new Date(h.changedAt).toLocaleString()} by {h.changedByName}
+                      {h.note ? ` - ${h.note}` : ''}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="panel">
+            <h2 className="section-head">Customer notifications</h2>
+            {notifications.length === 0 ? <p className="muted">None sent yet.</p> : (
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                {notifications.map((n) => (
+                  <li key={n.id} style={{ marginBottom: 8 }}>
+                    <strong>{n.event.replace(/_/g, ' ')}</strong> via {n.channel}: {n.result}
+                    <div className="muted">{new Date(n.sentAt).toLocaleString()}</div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
         </aside>
       </div>

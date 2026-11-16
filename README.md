@@ -108,3 +108,31 @@ The seed script creates two shops. On a fresh database, Bobs Auto Care is shop `
     /routes      auth, customers
 docker-compose.yml
 ```
+## Features added to complete all 26 functional requirements
+
+After pulling these changes, install the new dependency and apply the new migration:
+
+```bash
+cd server
+npm install            # adds pdfkit for invoice PDFs
+npx prisma migrate deploy
+npx prisma generate
+node prisma/seed.js    # reseed: the seed now also clears the new tables
+```
+
+New API routes (all under `/api`): `PATCH /work-orders/:id/technician`, `GET /work-orders/:id/history`,
+`GET /work-orders/:id/notifications`, `POST|GET /work-orders/:id/invoice`, `GET /work-orders/:id/invoice/pdf`,
+`POST /work-orders/:id/invoice/email`, `PATCH /work-orders/:id/invoice/payment`, `PATCH /users/:id`,
+`GET|PATCH /shop`, `GET /audit`. Manager-only: assigning technicians, recording approvals, invoices, staff and audit.
+
+Notifications are emailed through the `messaging/` module and every attempt is written to `notification_log`.
+By default (`MESSAGING_DRIVER=console`) messages are only logged. To send them for real, set
+`MESSAGING_DRIVER=live` and fill in the `SMTP_*` values in `server/.env` (see `.env.example`).
+
+### Tests
+
+```bash
+cd server
+npm test            # unit tests for the estimate / tax maths
+npm run test:e2e    # full workflow against the running API (start the server and run `npm run seed` first)
+```

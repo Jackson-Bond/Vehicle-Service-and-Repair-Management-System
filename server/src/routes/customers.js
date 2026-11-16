@@ -2,6 +2,7 @@ import { Router } from 'express';
 import prisma from '../lib/prisma.js';
 import requireRole from '../middleware/requireRole.js';
 import { historyFilter, loadHistory } from '../serviceHistory.js';
+import { auditSafe } from '../lib/audit.js';
 
 const router = Router();
 
@@ -121,6 +122,7 @@ router.post('/', async (req, res) => {
       // shop comes from the token, never the body
       data: { shopId: req.user.shopId, ...customerData(body) },
     });
+    await auditSafe(req.user, 'create', 'customer', customer.id);
     res.status(201).json(customer);
   } catch (err) {
     res.status(500).json({ error: 'Could not save customer' });
@@ -141,6 +143,7 @@ router.patch('/:id', async (req, res) => {
       where: { id: customer.id },
       data: customerData(body),
     });
+    await auditSafe(req.user, 'update', 'customer', customer.id);
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: 'Could not save customer' });

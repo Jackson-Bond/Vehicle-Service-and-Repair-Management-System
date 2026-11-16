@@ -22,7 +22,7 @@ router.post('/login', async (req, res) => {
   });
 
   // check if membership exists and pin is correct
-  const valid = membership && (await bcrypt.compare(String(pin), membership.user.pinHash));
+  const valid = membership && membership.active && (await bcrypt.compare(String(pin), membership.user.pinHash));
   if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
   // create a signed JWT login token {user ID, shop ID, role} ####### VERY IMPORTANT #######

@@ -13,9 +13,8 @@ export default function Layout({ session, onLogout, children }) {
                         <NavLink to="/work-orders/new">New Work Order</NavLink>
                         <NavLink to="/customers">Customers</NavLink>
                         <NavLink to="/vehicles/new">Register Vehicle</NavLink>
-                        {session.role === 'manager' && <NavLink to="/users/new">Add User</NavLink>}
                         {session.role === 'manager' && <NavLink to="/staff">Staff</NavLink>}
-                        {session.role === 'manager' && <NavLink to="/audit">Audit log</NavLink>}
+                        {session.role === 'manager' && <NavLink to="/audit">Audit Log</NavLink>}
                     </nav>
 
                     <div className="user-menu">

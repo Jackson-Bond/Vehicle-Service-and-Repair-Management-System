@@ -4,7 +4,7 @@ const live = () => process.env.MESSAGING_DRIVER === 'live';
 
 let mailer;
 
-export async function sendEmail({ to, subject, text }) {
+export async function sendEmail({ to, subject, text, html }) {
   if (!live()) return console.log(`[email -> ${to}] ${subject}\n${text}`);
 
   mailer ??= nodemailer.createTransport({
@@ -12,5 +12,5 @@ export async function sendEmail({ to, subject, text }) {
     port: Number(process.env.SMTP_PORT),
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
   });
-  await mailer.sendMail({ from: process.env.EMAIL_FROM, to, subject, text });
+  await mailer.sendMail({ from: process.env.EMAIL_FROM, to, subject, text, html });
 }

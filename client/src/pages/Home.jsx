@@ -53,14 +53,14 @@ export default function Home({ session, onLogout }) {
     <div className="page">
       <div className="page-header">
         <div>
-          <h1>{isTechnician ? 'My work orders' : 'Work orders'}</h1>
+          <h1>{isTechnician ? 'My Work Orders' : 'Work Orders'}</h1>
           <p>
             {isTechnician
               ? 'Work orders assigned to you, newest first.'
               : 'Every work order in the shop, newest first.'}
           </p>
         </div>
-        <Link to="/work-orders/new" className="btn">New work order</Link>
+        <Link to="/work-orders/new" className="btn">New Work Order</Link>
       </div>
 
       {error && <p className="message message-error" role="alert">{error}</p>}
@@ -157,7 +157,7 @@ export default function Home({ session, onLogout }) {
                 ? 'No work orders are assigned to you yet.'
                 : 'No work orders yet. Create one when a customer brings in a vehicle.'}
             </p>
-            {!isTechnician && <Link to="/work-orders/new" className="btn">New work order</Link>}
+            {!isTechnician && <Link to="/work-orders/new" className="btn">New Work Order</Link>}
           </div>
         )}
 

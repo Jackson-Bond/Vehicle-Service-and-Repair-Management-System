@@ -43,7 +43,7 @@ export default function AddUser({ session, onLogout }) {
     <div className="page page-narrow">
       <div className="page-header">
         <div>
-          <h1>Add user</h1>
+          <h1>Add User</h1>
           <p>The new employee logs in with the code shown after saving and the PIN you set.</p>
         </div>
       </div>
@@ -80,7 +80,7 @@ export default function AddUser({ session, onLogout }) {
 
         <div className="form-actions">
           <button type="submit" className="btn" disabled={saving}>
-            {saving ? 'Saving...' : 'Add user'}
+            {saving ? 'Saving...' : 'Add User'}
           </button>
           <Link to="/" className="btn btn-secondary">Cancel</Link>
         </div>

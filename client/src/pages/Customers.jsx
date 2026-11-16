@@ -40,7 +40,7 @@ export default function Customers({ session, onLogout }) {
                     <h1>Customers</h1>
                     <p>Open a customer to see their vehicles and service history.</p>
                 </div>
-                <Link to="/customers/new" className="btn">Register customer</Link>
+                <Link to="/customers/new" className="btn">Register Customer</Link>
             </div>
 
             <div className="toolbar">
@@ -64,7 +64,6 @@ export default function Customers({ session, onLogout }) {
                                 <th>Name</th>
                                 <th>Phone</th>
                                 <th>Email</th>
-                                <th>Prefers</th>
                                 <th className="num">Vehicles</th>
                                 <th>Last visit</th>
                             </tr>
@@ -105,7 +104,7 @@ export default function Customers({ session, onLogout }) {
                 {loaded && customers.length === 0 && (
                     <div className="empty">
                         <p>{search ? 'No customers match that search.' : 'No customers yet.'}</p>
-                        {!search && <Link to="/customers/new" className="btn">Register customer</Link>}
+                        {!search && <Link to="/customers/new" className="btn">Register Customer</Link>}
                     </div>
                 )}
 

@@ -9,11 +9,11 @@ export default function Layout({ session, onLogout, children }) {
                     <Link to="/" className="brand">Shop Manager</Link>
 
                     <nav className="main-nav" aria-label="Main">
-                        <NavLink to="/" end>Work orders</NavLink>
-                        <NavLink to="/work-orders/new">New work order</NavLink>
+                        <NavLink to="/" end>Work Orders</NavLink>
+                        <NavLink to="/work-orders/new">New Work Order</NavLink>
                         <NavLink to="/customers">Customers</NavLink>
-                        <NavLink to="/vehicles/new">Register vehicle</NavLink>
-                        {session.role === 'manager' && <NavLink to="/users/new">Add user</NavLink>}
+                        <NavLink to="/vehicles/new">Register Vehicle</NavLink>
+                        {session.role === 'manager' && <NavLink to="/users/new">Add User</NavLink>}
                     </nav>
 
                     <div className="user-menu">
@@ -22,7 +22,7 @@ export default function Layout({ session, onLogout, children }) {
                             <span className="user-role">{session.role}</span>
                         </span>
                         <button type="button" className="btn btn-secondary" onClick={onLogout}>
-                            Log out
+                            Log Out
                         </button>
                     </div>
                 </div>

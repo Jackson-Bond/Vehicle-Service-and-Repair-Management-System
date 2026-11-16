@@ -119,7 +119,7 @@ export default function RegisterVehicle({ session, onLogout }) {
     <div className="page page-narrow">
       <div className="page-header">
         <div>
-          <h1>Register vehicle</h1>
+          <h1>Register Vehicle</h1>
           <p>Link a vehicle to an existing customer.</p>
         </div>
       </div>
@@ -188,7 +188,7 @@ export default function RegisterVehicle({ session, onLogout }) {
 
         <div className="form-actions">
           <button type="submit" className="btn" disabled={saving}>
-            {saving ? 'Saving...' : 'Register vehicle'}
+            {saving ? 'Saving...' : 'Register Vehicle'}
           </button>
           <Link to={presetCustomerId ? `/customers/${presetCustomerId}` : '/customers'} className="btn btn-secondary">Cancel</Link>
         </div>

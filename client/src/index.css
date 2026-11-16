@@ -1,5 +1,5 @@
 /* Shop UI styles
-   Ink on cool paper, with safety amber kept for the work order "ticket stub". */
+   Ink on cool paper, with safety amber for the work order "ticket stub". */
 
 :root {
   --ink: #1c2b36;
@@ -81,7 +81,7 @@ a:hover {
   outline-offset: 2px;
 }
 
-/* ---------- App shell ---------- */
+/* App shell */
 
 .app-bar {
   background: var(--ink);
@@ -183,7 +183,7 @@ a:hover {
   font-weight: 500;
 }
 
-/* ---------- Buttons ---------- */
+/* Buttons */
 
 .btn {
   display: inline-flex;
@@ -246,7 +246,7 @@ a:hover {
   background: #2c3e4b;
 }
 
-/* ---------- Forms ---------- */
+/* Forms */
 
 .form {
   display: grid;
@@ -389,7 +389,7 @@ select:disabled {
   font-weight: 600;
 }
 
-/* ---------- Status badges ---------- */
+/* Status badges */
 
 .status {
   display: inline-flex;
@@ -447,7 +447,7 @@ select:disabled {
   color: var(--danger);
 }
 
-/* ---------- Work order list ---------- */
+/* Work order list */
 
 .toolbar {
   display: flex;
@@ -594,7 +594,7 @@ a.ro:hover {
   line-height: 1.1;
 }
 
-/* ---------- Work order detail ---------- */
+/* Work order detail */
 
 .wo-header {
   display: flex;
@@ -720,7 +720,7 @@ a.ro:hover {
   font-size: 1.125rem;
 }
 
-/* ---------- Login ---------- */
+/* Login */
 
 .login-screen {
   min-height: 100vh;
@@ -776,7 +776,7 @@ a.ro:hover {
   letter-spacing: 0.4em;
 }
 
-/* ---------- Small screens ---------- */
+/* Small screens */
 
 @media (max-width: 900px) {
   .wo-layout {
@@ -902,7 +902,7 @@ a.ro:hover {
   border: 0;
 }
 
-/* ---------- Customers and service history ---------- */
+/* Customers and service history */
 
 .row-title {
   font-weight: 600;

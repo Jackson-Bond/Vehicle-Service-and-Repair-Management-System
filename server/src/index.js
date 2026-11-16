@@ -14,6 +14,11 @@ import serviceRoutes from './routes/services.js';
 import auditRoutes from './routes/audit.js';
 import shopRoutes from './routes/shop.js';
 
+if (!process.env.JWT_SECRET) {
+  console.error('JWT_SECRET is not set. Copy server/.env.example to server/.env and fill it in.');
+  process.exit(1);
+}
+
 const app = express();
 // allows browser based requests from vite
 app.use(cors());

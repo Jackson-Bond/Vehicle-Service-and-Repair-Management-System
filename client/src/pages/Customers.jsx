@@ -2,8 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 
-const CONTACT_LABELS = { phone: 'Phone call', sms: 'Text message', email: 'Email' };
-
 export default function Customers({ session, onLogout }) {
     const navigate = useNavigate();
     const [customers, setCustomers] = useState([]);
@@ -86,9 +84,6 @@ export default function Customers({ session, onLogout }) {
                                     </td>
                                     <td data-label="Phone">{customer.phone ?? <span className="muted">None</span>}</td>
                                     <td data-label="Email">{customer.email ?? <span className="muted">None</span>}</td>
-                                    <td data-label="Prefers">
-                                        {CONTACT_LABELS[customer.preferredContactMethod] ?? <span className="muted">No preference</span>}
-                                    </td>
                                     <td className="num" data-label="Vehicles">{customer.vehicleCount}</td>
                                     <td data-label="Last visit">
                                         {customer.lastVisit

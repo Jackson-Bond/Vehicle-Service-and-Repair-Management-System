@@ -79,7 +79,7 @@ The seed script creates two shops. On a fresh database, Bobs Auto Care is shop `
 | Shop ID | Employee code | PIN    | Role       |
 |---------|---------------|--------|------------|
 | 1       | 1001        | 123456 | manager    |
-| 1       | 1002         | 234567 | advisor    |
+| 1       | 1002         | 234567 | technician |
 | 1       | 1003         | 345678 | technician |
 | 2       | 1001      | 123456 | manager    |
 | 2       | 1002        | 456789 | technician |

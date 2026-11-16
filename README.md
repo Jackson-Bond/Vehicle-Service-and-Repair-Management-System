@@ -5,7 +5,7 @@ React (Vite), Node.js/Express, PostgreSQL (Prisma), JWT auth with bcrypt-hashed 
 ## Prerequisites
 
 - Node.js 18 or newer
-- Docker (runs PostgreSQL)
+- Docker (runs PostgreSQL), or any local PostgreSQL 16 whose connection string you put in `DATABASE_URL`
 - Git
 
 ## Setup for first time usage

@@ -1,11 +1,22 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma.js';
 
 const router = Router();
 
-router.post('/login', async (req, res) => {
+// slows down PIN guessing: only failed logins count, per IP
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many failed logins. Try again in a few minutes.' },
+});
+
+router.post('/login', loginLimiter, async (req, res) => {
 
   const { shopId, employeeCode, pin } = req.body ?? {};
   const code = Number(employeeCode);

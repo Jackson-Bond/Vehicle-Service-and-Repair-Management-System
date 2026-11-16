@@ -3,14 +3,11 @@ import { Link, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import ServiceHistory from '../components/ServiceHistory.jsx';
 
-const CONTACT_LABELS = { phone: 'Phone call', sms: 'Text message', email: 'Email' };
-
 function formFrom(customer) {
     return {
         name: customer.name,
         phone: customer.phone ?? '',
         email: customer.email ?? '',
-        preferredContactMethod: customer.preferredContactMethod ?? '',
     };
 }
 
@@ -144,20 +141,6 @@ export default function CustomerDetail({ session, onLogout }) {
                                     <label htmlFor="email">Email</label>
                                     <input id="email" name="email" type="email" value={form.email} onChange={handleChange} />
                                 </div>
-                                <div className="field">
-                                    <label htmlFor="preferredContactMethod">Preferred contact method</label>
-                                    <select
-                                        id="preferredContactMethod"
-                                        name="preferredContactMethod"
-                                        value={form.preferredContactMethod}
-                                        onChange={handleChange}
-                                    >
-                                        <option value="">No preference</option>
-                                        <option value="phone">Phone call</option>
-                                        <option value="sms">Text message</option>
-                                        <option value="email">Email</option>
-                                    </select>
-                                </div>
                                 <div className="form-actions">
                                     <button type="submit" className="btn" disabled={saving}>
                                         {saving ? 'Saving...' : 'Save'}
@@ -176,10 +159,6 @@ export default function CustomerDetail({ session, onLogout }) {
                                 <div>
                                     <dt>Email</dt>
                                     <dd>{customer.email ?? <span className="muted">None</span>}</dd>
-                                </div>
-                                <div>
-                                    <dt>Preferred contact</dt>
-                                    <dd>{CONTACT_LABELS[customer.preferredContactMethod] ?? <span className="muted">No preference</span>}</dd>
                                 </div>
                             </dl>
                         )}

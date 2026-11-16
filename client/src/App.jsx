@@ -10,6 +10,8 @@ import AddUser from './pages/AddUser.jsx';
 import Customers from './pages/Customers.jsx';
 import CustomerDetail from './pages/CustomerDetail.jsx';
 import VehicleDetail from './pages/VehicleDetail.jsx';
+import Staff from './pages/Staff.jsx';
+import AuditLog from './pages/AuditLog.jsx';
 
 import Layout from './components/Layout.jsx';
 
@@ -33,6 +35,12 @@ export default function App() {
         <Route path="/work-orders/:id" element={<WorkOrderDetail session={session} onLogout={logout} />} />
         {session.role === 'manager' && (
           <Route path="/users/new" element={<AddUser session={session} onLogout={logout} />} />
+        )}
+        {session.role === 'manager' && (
+          <Route path="/staff" element={<Staff session={session} onLogout={logout} />} />
+        )}
+        {session.role === 'manager' && (
+          <Route path="/audit" element={<AuditLog session={session} onLogout={logout} />} />
         )}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>

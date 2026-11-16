@@ -11,6 +11,8 @@ import vehicleRoutes from './routes/vehicles.js';
 import userRoutes from './routes/users.js';
 import partRoutes from './routes/parts.js';
 import serviceRoutes from './routes/services.js';
+import auditRoutes from './routes/audit.js';
+import shopRoutes from './routes/shop.js';
 
 const app = express();
 // allows browser based requests from vite
@@ -26,6 +28,8 @@ app.use('/api/vehicles', authenticate, vehicleRoutes);
 app.use('/api/users', authenticate, userRoutes);
 app.use('/api/parts', authenticate, partRoutes);
 app.use('/api/services', authenticate, serviceRoutes);
+app.use('/api/audit', authenticate, auditRoutes);
+app.use('/api/shop', authenticate, shopRoutes);
 
 app.get('/health', async (req, res) => {
   try {

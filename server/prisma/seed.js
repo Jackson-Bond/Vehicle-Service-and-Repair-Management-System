@@ -5,7 +5,7 @@ import prisma from '../src/lib/prisma.js';
 async function main() {
   // delete in reverse-dependency order so the seed is re-runnable
   await prisma.$executeRaw`
-  TRUNCATE TABLE "work_order_service", "work_order_part", "work_order",
+  TRUNCATE TABLE "audit_log", "notification_log", "invoice", "approval", "status_history", "work_order_service", "work_order_part", "work_order",
     "customer_vehicle", "customer", "vehicle", "service", "part",
     "shop_user", "user", "shop"
   RESTART IDENTITY CASCADE`;

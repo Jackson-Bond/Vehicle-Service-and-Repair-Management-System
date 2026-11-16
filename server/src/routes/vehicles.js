@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import prisma from '../lib/prisma.js';
+import { auditSafe } from '../lib/audit.js';
 import { historyFilter, loadHistory } from '../serviceHistory.js';
 
 const router = Router();
@@ -84,6 +85,7 @@ router.post('/', async (req, res) => {
       return v;
     });
 
+    await auditSafe(req.user, 'create', 'vehicle', vehicle.id, { customerId: customer.id });
     res.status(201).json(vehicle);
   } catch (err) {
     if (err.code === 'P2002') {
@@ -141,6 +143,7 @@ router.patch('/:id', async (req, res) => {
         year: Number(req.body.year),
       },
     });
+    await auditSafe(req.user, 'update', 'vehicle', vehicle.id);
     res.json(await findShopVehicle(req));
   } catch (err) {
     res.status(500).json({ error: 'Could not save vehicle' });

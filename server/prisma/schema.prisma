@@ -25,6 +25,8 @@ model Shop {
   parts      Part[]
   services   Service[]
   nextEmployeeNumber Int @default(1001) @map("next_employee_number")
+  // sales tax used by estimates and invoices (0.0825 = 8.25%)
+  taxRate            Decimal @default(0.0825) @map("tax_rate") @db.Decimal(6, 4)
 
   @@map("shop")
 }
@@ -45,6 +47,8 @@ model ShopUser {
   userId       Int    @map("user_id")
   role         String
   employeeCode Int @map("employee_code")
+  // deactivated staff cannot log in or be assigned work (FR-25)
+  active       Boolean @default(true)
 
   shop Shop @relation(fields: [shopId], references: [id])
   user User @relation(fields: [userId], references: [id])
@@ -113,6 +117,12 @@ model WorkOrder {
   customerComplaint  String?   @map("customer_complaint")
   diagnosis          String?
   notes              String?
+  conditionNotes     String?   @map("condition_notes")
+
+  statusHistory StatusHistory[]
+  approvals     Approval[]
+  invoice       Invoice?
+  notifications NotificationLog[]
 
   shop Shop @relation(fields: [shopId], references: [id])
 
@@ -209,4 +219,97 @@ model WorkOrderService {
   @@index([serviceId])
   @@index([shopId])
   @@map("work_order_service")
+}
+
+// every status change and technician reassignment; insert-only (FR-13, NFR-08)
+model StatusHistory {
+  id          Int      @id @default(autoincrement()) @map("status_history_id")
+  workOrderId Int      @map("work_order_id")
+  shopId      Int      @map("shop_id")
+  fromStatus  String?  @map("from_status")
+  toStatus    String   @map("to_status")
+  changedBy   Int      @map("changed_by")
+  changedAt   DateTime @default(now()) @map("changed_at")
+  note        String?
+
+  workOrder WorkOrder @relation(fields: [workOrderId], references: [id])
+
+  @@index([workOrderId])
+  @@map("status_history")
+}
+
+// customer approval or decline decision (FR-10, FR-12); insert-only
+model Approval {
+  id            Int      @id @default(autoincrement()) @map("approval_id")
+  workOrderId   Int      @map("work_order_id")
+  shopId        Int      @map("shop_id")
+  decision      String   // approved | declined
+  method        String   // in_person | phone | sms | email
+  approvedTotal Decimal  @map("approved_total") @db.Decimal(10, 2)
+  recordedBy    Int      @map("recorded_by")
+  recordedAt    DateTime @default(now()) @map("recorded_at")
+  note          String?
+
+  workOrder WorkOrder @relation(fields: [workOrderId], references: [id])
+
+  @@index([workOrderId])
+  @@map("approval")
+}
+
+// invoice built from completed labor and parts actually used (FR-18, FR-19)
+model Invoice {
+  id            Int       @id @default(autoincrement()) @map("invoice_id")
+  workOrderId   Int       @unique @map("work_order_id")
+  shopId        Int       @map("shop_id")
+  lines         Json
+  subtotal      Decimal   @db.Decimal(10, 2)
+  taxRate       Decimal   @map("tax_rate") @db.Decimal(6, 4)
+  tax           Decimal   @db.Decimal(10, 2)
+  total         Decimal   @db.Decimal(10, 2)
+  paymentStatus String    @default("unpaid") @map("payment_status")
+  paymentMethod String?   @map("payment_method")
+  paidAt        DateTime? @map("paid_at")
+  createdBy     Int       @map("created_by")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  workOrder WorkOrder @relation(fields: [workOrderId], references: [id])
+
+  @@index([shopId])
+  @@map("invoice")
+}
+
+// one row per customer notification attempt (FR-22, FR-23)
+model NotificationLog {
+  id          Int      @id @default(autoincrement()) @map("notification_id")
+  shopId      Int      @map("shop_id")
+  workOrderId Int?     @map("work_order_id")
+  customerId  Int      @map("customer_id")
+  event       String
+  channel     String   // sms | email | phone | none
+  recipient   String?
+  result      String   // sent | logged | failed | skipped
+  detail      String?
+  sentAt      DateTime @default(now()) @map("sent_at")
+
+  workOrder WorkOrder? @relation(fields: [workOrderId], references: [id])
+
+  @@index([shopId, sentAt])
+  @@index([workOrderId])
+  @@map("notification_log")
+}
+
+// who created, updated or approved what (FR-26); insert-only
+model AuditLog {
+  id         Int      @id @default(autoincrement()) @map("audit_id")
+  shopId     Int      @map("shop_id")
+  userId     Int      @map("user_id")
+  action     String
+  entityType String   @map("entity_type")
+  entityId   Int?     @map("entity_id")
+  details    Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([shopId, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_log")
 }

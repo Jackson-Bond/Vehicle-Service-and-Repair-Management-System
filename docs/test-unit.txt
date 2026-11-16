@@ -2,9 +2,9 @@
 > server@1.0.0 test
 > node --test test/estimate.test.js
 
-✔ labor 200 + parts 150 at 8.25% totals 378.88 (1.716271ms)
-✔ empty estimate is zero (0.195359ms)
-✔ zero tax rate adds no tax (0.189773ms)
+✔ labor 200 + parts 150 at 8.25% totals 378.88 (1.006586ms)
+✔ empty estimate is zero (0.174921ms)
+✔ zero tax rate adds no tax (0.152749ms)
 ℹ tests 3
 ℹ suites 0
 ℹ pass 3
@@ -12,4 +12,4 @@
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 135.468383
+ℹ duration_ms 107.902771

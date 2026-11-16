@@ -15,8 +15,8 @@ PASS FR-05 second check-in blocked
 PASS FR-08 diagnosis only after moving to diagnosis stage
 PASS approval request needs a service
 PASS FR-09/15 add service and part, estimate computed
-PASS FR-22 estimate_ready notification logged
-PASS FR-23 channel follows preferred contact method (Maria = sms)
+PASS FR-22 estimate notification logged
+PASS FR-23 notifications go by email and are logged, not sent, without live driver
 PASS FR-11 repair blocked before approval
 PASS FR-10 technician cannot record approval (403)
 PASS FR-10 approval needs a method

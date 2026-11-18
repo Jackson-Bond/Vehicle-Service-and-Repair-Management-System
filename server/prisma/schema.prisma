@@ -160,6 +160,7 @@ model Part {
   description     String?
   price           Decimal @db.Decimal(10, 2)
   quantityInStock Int     @default(0) @map("quantity_in_stock")
+  reorderLevel    Int     @default(5) @map("reorder_level")
 
   shop       Shop            @relation(fields: [shopId], references: [id])
   workOrders WorkOrderPart[]

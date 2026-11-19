@@ -16,8 +16,33 @@ import Parts from './pages/Parts.jsx';
 
 import Layout from './components/Layout.jsx';
 
+const SESSION_KEY = 'session';
+
+// Restores the login after a page refresh. Ignored if missing, unreadable or already expired.
+function loadSession() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(SESSION_KEY));
+    if (!saved?.token) return null;
+    const payload = saved.token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const { exp } = JSON.parse(atob(payload));
+    return exp * 1000 > Date.now() ? saved : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function App() {
-  const [session, setSession] = useState(null); // { token, role, name }
+  const [session, setSessionState] = useState(loadSession);
+
+  function setSession(next) {
+    try {
+      if (next) sessionStorage.setItem(SESSION_KEY, JSON.stringify(next));
+      else sessionStorage.removeItem(SESSION_KEY);
+    } catch {
+      // storage can be blocked (e.g. some private windows); the login still works until refresh
+    }
+    setSessionState(next);
+  }
   const [stockVersion, setStockVersion] = useState(0);
 
   if (!session) return <Login onLogin={setSession} />;

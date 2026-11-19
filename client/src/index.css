@@ -94,7 +94,7 @@ a:hover {
   padding: 0 24px;
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: 24px;
   min-height: 60px;
 }
 
@@ -973,4 +973,97 @@ a.row-title:hover {
 
 .status-actions+.message {
   margin: -8px 0 24px;
+}
+
+.main-nav a {
+  position: relative;
+}
+
+.nav-badge {
+  display: inline-block;
+  min-width: 20px;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--signal);
+  color: var(--signal-ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  vertical-align: 1px;
+}
+
+.stock-alert {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-left: 4px solid var(--signal);
+  border-radius: var(--radius-sm);
+  background: #fdf0d5;
+  color: #5c3b00;
+}
+
+.link-button {
+  font: inherit;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.parts-form {
+  margin-bottom: 24px;
+}
+
+.restock-field {
+  max-width: 280px;
+}
+
+.row-low td:first-child {
+  box-shadow: inset 3px 0 0 var(--signal);
+}
+
+.row-actions {
+  white-space: nowrap;
+}
+
+.row-actions .btn {
+  padding: 6px 12px;
+}
+
+.row-actions .btn+.btn {
+  margin-left: 4px;
+}
+
+@media (max-width: 720px) {
+
+  .row-low td:first-child {
+    box-shadow: none;
+  }
+
+  table.stack tr.row-low {
+    box-shadow: inset 3px 0 0 var(--signal);
+  }
+
+  table.parts td:first-child {
+    display: block;
+    margin-right: 0;
+  }
+
+  table.parts td[data-label] {
+    text-align: left;
+  }
+}
+
+.user-id {
+  display: grid;
+  line-height: 1.2;
+  text-align: right;
+}
+
+.user-id .user-role {
+  font-size: 0.8125rem;
 }

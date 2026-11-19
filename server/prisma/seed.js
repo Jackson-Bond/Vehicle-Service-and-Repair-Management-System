@@ -76,7 +76,10 @@ async function main() {
     data: { shopId: shopA.id, partNumber: 'OF-1001', name: 'Oil Filter', description: 'Standard spin-on filter', price: 8.99, quantityInStock: 40 },
   });
   const brakePadsA = await prisma.part.create({
-    data: { shopId: shopA.id, partNumber: 'BP-2001', name: 'Front Brake Pads', description: 'Ceramic, set of 4', price: 54.5, quantityInStock: 12 },
+    data: { shopId: shopA.id, partNumber: 'BP-2001', name: 'Front Brake Pads', description: 'Ceramic, set of 4', price: 54.5, quantityInStock: 12, reorderLevel: 4 },
+  });
+  await prisma.part.create({
+    data: { shopId: shopA.id, partNumber: 'CF-3001', name: 'Cabin Air Filter', description: 'Pollen and dust filter', price: 19.99, quantityInStock: 2, reorderLevel: 5 },
   });
   const oilFilterB = await prisma.part.create({
     data: { shopId: shopB.id, partNumber: 'OF-1001', name: 'Oil Filter', description: 'Standard spin-on filter', price: 9.49, quantityInStock: 15 },

@@ -30,6 +30,7 @@ export default function AuditLog({ session, onLogout }) {
           <option value="customer">Customers</option>
           <option value="vehicle">Vehicles</option>
           <option value="invoice">Invoices</option>
+          <option value="part">Parts</option>
           <option value="user">Staff</option>
           <option value="shop">Settings</option>
         </select>

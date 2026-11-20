@@ -8,6 +8,7 @@ export default function Staff({ session, onLogout }) {
   const [message, setMessage] = useState('');
   const [editing, setEditing] = useState(null); // { id, name, role, pin }
   const [taxPercent, setTaxPercent] = useState('');
+  const [busy, setBusy] = useState(false);
 
   function fail(err) {
     if (err.status === 401) onLogout();
@@ -23,40 +24,45 @@ export default function Staff({ session, onLogout }) {
     api('/api/shop', session.token).then((shop) => setTaxPercent(String(+(shop.taxRate * 100).toFixed(4)))).catch(fail);
   }, []);
 
-  async function save(submit) {
-    submit.preventDefault();
+  // runs one save at a time, so a double click doesn't send the request twice
+  async function run(task) {
+    if (busy) return;
+    setBusy(true);
     setMessage('');
+    try {
+      await task();
+    } catch (err) {
+      fail(err);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function save(submit) {
+    submit.preventDefault();
     const body = { name: editing.name, role: editing.role };
     if (editing.pin) body.pin = editing.pin;
-    try {
+    run(async () => {
       await api(`/api/users/${editing.id}`, session.token, { method: 'PATCH', body: JSON.stringify(body) });
       setEditing(null);
       load();
-    } catch (err) {
-      fail(err);
-    }
+    });
   }
 
-  async function setActive(member, active) {
-    setMessage('');
+  function setActive(member, active) {
     if (!active && !window.confirm(`Deactivate ${member.name}? They will be logged out and cannot sign in.`)) return;
-    try {
+    run(async () => {
       await api(`/api/users/${member.id}`, session.token, { method: 'PATCH', body: JSON.stringify({ active }) });
       load();
-    } catch (err) {
-      fail(err);
-    }
+    });
   }
 
-  async function saveTax(submit) {
+  function saveTax(submit) {
     submit.preventDefault();
-    setMessage('');
-    try {
+    run(async () => {
       await api('/api/shop', session.token, { method: 'PATCH', body: JSON.stringify({ taxRate: Number(taxPercent) / 100 }) });
       setMessage('Tax rate saved.');
-    } catch (err) {
-      fail(err);
-    }
+    });
   }
 
   return (
@@ -71,7 +77,7 @@ export default function Staff({ session, onLogout }) {
 
       <section className="panel">
         <div className="table-wrap">
-          <table className="data">
+          <table className="data stack">
             <thead>
               <tr><th>Name</th><th>Role</th><th>Code</th><th>Status</th><th><span className="sr-only">Actions</span></th></tr>
             </thead>
@@ -79,14 +85,14 @@ export default function Staff({ session, onLogout }) {
               {staff.map((m) => (
                 <tr key={m.id}>
                   <td>{m.name}</td>
-                  <td>{m.role}</td>
-                  <td>{m.employeeCode}</td>
-                  <td>{m.active ? 'Active' : 'Deactivated'}</td>
-                  <td className="num">
-                    <button type="button" className="btn btn-quiet" onClick={() => setEditing({ id: m.id, name: m.name, role: m.role, pin: '' })}>Edit</button>
+                  <td data-label="Role">{m.role}</td>
+                  <td data-label="Code">{m.employeeCode}</td>
+                  <td data-label="Status">{m.active ? 'Active' : 'Deactivated'}</td>
+                  <td className="num row-actions">
+                    <button type="button" className="btn btn-quiet" disabled={busy} onClick={() => setEditing({ id: m.id, name: m.name, role: m.role, pin: '' })}>Edit</button>
                     {m.active
-                      ? <button type="button" className="btn btn-quiet" onClick={() => setActive(m, false)}>Deactivate</button>
-                      : <button type="button" className="btn btn-quiet" onClick={() => setActive(m, true)}>Reactivate</button>}
+                      ? <button type="button" className="btn btn-quiet" disabled={busy} onClick={() => setActive(m, false)}>Deactivate</button>
+                      : <button type="button" className="btn btn-quiet" disabled={busy} onClick={() => setActive(m, true)}>Reactivate</button>}
                   </td>
                 </tr>
               ))}
@@ -118,7 +124,7 @@ export default function Staff({ session, onLogout }) {
             />
           </div>
           <div className="form-actions">
-            <button type="submit" className="btn">Save</button>
+            <button type="submit" className="btn" disabled={busy}>{busy ? 'Saving...' : 'Save'}</button>
             <button type="button" className="btn btn-secondary" onClick={() => setEditing(null)}>Cancel</button>
           </div>
         </form>
@@ -131,7 +137,7 @@ export default function Staff({ session, onLogout }) {
           <input id="tax" type="number" step="0.01" min="0" max="25" value={taxPercent} onChange={(e) => setTaxPercent(e.target.value)} required />
           <span className="hint">Used by new estimates and invoices.</span>
         </div>
-        <div className="form-actions"><button type="submit" className="btn">Save tax rate</button></div>
+        <div className="form-actions"><button type="submit" className="btn" disabled={busy}>{busy ? 'Saving...' : 'Save tax rate'}</button></div>
       </form>
 
       {message && <p className="message" role="status">{message}</p>}

@@ -3,12 +3,13 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "start": "node src/index.js",
-    "test": "node --test test/estimate.test.js",
-    "seed": "node prisma/seed.js",
-    "test:e2e": "node test/workflow.e2e.mjs"
-  },
+    "scripts": {
+      "start": "node src/index.js",
+      "test": "node --test ../test/estimate.test.mjs",
+      "seed": "node prisma/seed.js",
+      "test:e2e": "node ../test/workflow.e2e.mjs",
+      "test:api": "node ../test/api.checks.mjs"
+    },
   "keywords": [],
   "author": "",
   "license": "ISC",

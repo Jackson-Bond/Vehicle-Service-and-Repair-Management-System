@@ -1,0 +1,21 @@
+﻿
+> server@1.0.0 test:api
+> node ../test/api.checks.mjs
+
+PASS M-01 save a customer with no name is rejected
+PASS M-02 save a customer with name, phone and email
+PASS M-03 search customers by phone
+PASS M-04 search customers by part of the name, any case
+PASS M-05 edit the customer phone
+PASS M-06 register a vehicle for the customer
+PASS M-07 the same VIN again does not create a second vehicle
+PASS M-08 an invalid VIN is rejected
+PASS M-09 technician cannot open the audit log API
+PASS M-10 technician cannot add a part
+PASS M-11 low-stock list has only CF-3001 (2 in stock, reorder at 5)
+PASS M-12 restock CF-3001 with 10 clears the low-stock flag
+PASS M-13 a request with no token is rejected
+PASS M-14 recording 2 brake pads lowers stock by 2
+PASS M-15 recording more parts than are in stock is rejected
+
+15 passed, 0 failed

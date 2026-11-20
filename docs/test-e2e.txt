@@ -1,6 +1,6 @@
-
+﻿
 > server@1.0.0 test:e2e
-> node test/workflow.e2e.mjs
+> node ../test/workflow.e2e.mjs
 
 PASS login works for manager and technician
 PASS FR-04 create service request, status service_requested

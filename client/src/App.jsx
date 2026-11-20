@@ -15,6 +15,7 @@ import AuditLog from './pages/AuditLog.jsx';
 import Parts from './pages/Parts.jsx';
 
 import Layout from './components/Layout.jsx';
+import { setLatestToken } from './api.js';
 
 const SESSION_KEY = 'session';
 
@@ -25,7 +26,9 @@ function loadSession() {
     if (!saved?.token) return null;
     const payload = saved.token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
     const { exp } = JSON.parse(atob(payload));
-    return exp * 1000 > Date.now() ? saved : null;
+    if (exp * 1000 <= Date.now()) return null;
+    setLatestToken(saved.token);
+    return saved;
   } catch {
     return null;
   }
@@ -41,6 +44,7 @@ export default function App() {
     } catch {
       // storage can be blocked (e.g. some private windows); the login still works until refresh
     }
+    setLatestToken(next?.token ?? null);
     setSessionState(next);
   }
   const [stockVersion, setStockVersion] = useState(0);

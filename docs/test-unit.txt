@@ -1,15 +1,14 @@
-﻿
-> server@1.0.0 test
+﻿> server@1.0.0 test
 > node --test ../test/estimate.test.mjs
 
-[32mÔ£ö labor 200 + parts 150 at 8.25% totals 378.88 [90m(1.1107ms)[39m[39m
-[32mÔ£ö empty estimate is zero [90m(0.1749ms)[39m[39m
-[32mÔ£ö zero tax rate adds no tax [90m(0.1304ms)[39m[39m
-[34mÔä╣ tests 3[39m
-[34mÔä╣ suites 0[39m
-[34mÔä╣ pass 3[39m
-[34mÔä╣ fail 0[39m
-[34mÔä╣ cancelled 0[39m
-[34mÔä╣ skipped 0[39m
-[34mÔä╣ todo 0[39m
-[34mÔä╣ duration_ms 96.3468[39m
+✔ labor 200 + parts 150 at 8.25% totals 378.88 (1.1107ms)
+✔ empty estimate is zero (0.1749ms)
+✔ zero tax rate adds no tax (0.1304ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 96.3468

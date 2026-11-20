@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { api } from '../api.js';
+import { api, currentToken } from '../api.js';
 import { STATUS_LABELS, PROGRESS_LABELS } from '../statuses.js';
 import StatusBadge from '../components/StatusBadge.jsx';
 
@@ -145,7 +145,7 @@ export default function WorkOrderDetail({ session, onLogout }) {
     setInvoiceMessage('');
     try {
       const response = await fetch(`/api/work-orders/${id}/invoice/pdf`, {
-        headers: { Authorization: `Bearer ${session.token}` },
+        headers: { Authorization: `Bearer ${currentToken(session.token)}` },
       });
       if (!response.ok) throw new Error('Could not load the invoice PDF');
       const url = URL.createObjectURL(await response.blob());

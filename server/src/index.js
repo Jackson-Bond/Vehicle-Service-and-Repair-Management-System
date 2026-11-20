@@ -5,7 +5,7 @@ import cors from 'cors';
 import prisma from './lib/prisma.js';
 import authRoutes from './routes/auth.js';
 import customerRoutes from './routes/customers.js';
-import authenticate from './middleware/authenticate.js';
+import authenticate, { RENEWED_TOKEN_HEADER } from './middleware/authenticate.js';
 import workOrderRoutes from './routes/workOrders.js';
 import vehicleRoutes from './routes/vehicles.js';
 import userRoutes from './routes/users.js';
@@ -21,7 +21,7 @@ if (!process.env.JWT_SECRET) {
 
 const app = express();
 // allows browser based requests from vite
-app.use(cors());
+app.use(cors({ exposedHeaders: [RENEWED_TOKEN_HEADER] }));
 // lets Express parse incoming JSON request bodies so routes can read req.body
 app.use(express.json());
 

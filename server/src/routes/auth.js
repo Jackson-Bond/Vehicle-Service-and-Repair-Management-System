@@ -3,7 +3,6 @@ import rateLimit from 'express-rate-limit';
 import bcrypt from 'bcrypt';
 import prisma from '../lib/prisma.js';
 import { signToken } from '../middleware/authenticate.js';
-import prisma from '../lib/prisma.js';
 
 const router = Router();
 
